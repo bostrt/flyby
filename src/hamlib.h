@@ -3,6 +3,7 @@
 
 #include "defines.h"
 #include <stdbool.h>
+#include <time.h>
 
 #define ROTCTLD_DEFAULT_HOST "localhost"
 #define ROTCTLD_DEFAULT_PORT "4533\0\0"
@@ -24,6 +25,12 @@ typedef struct {
 	int update_time_interval;
 	///Horizon above which we start tracking
 	double tracking_horizon;
+	///Previous time at which command was sent
+	time_t prev_cmd_time;
+	///Previous sent azimuth
+	double prev_cmd_azimuth;
+	///Previous sent elevation
+	double prev_cmd_elevation;
 } rotctld_info_t;
 
 typedef struct {
@@ -57,13 +64,14 @@ void rotctld_connect(const char *hostname, const char *port, int update_interval
 void rotctld_disconnect(rotctld_info_t *info);
 
 /**
- * Send track data to rotctld. 
+ * Send track data to rotctld. Data is sent when current time, azi and ele fulfill the resolution or time
+ * requirements with respect to previous time or coordinates.
  *
  * \param info rotctld connection instance
  * \param azimuth Azimuth in degrees
  * \param elevation Elevation in degrees
  **/
-void rotctld_track(const rotctld_info_t *info, double azimuth, double elevation);
+void rotctld_track(rotctld_info_t *info, double azimuth, double elevation);
 
 /**
  * Connect to rigctld. 

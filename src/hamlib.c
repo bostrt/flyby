@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -80,23 +81,39 @@ void rotctld_connect(const char *rotctld_host, const char *rotctld_port, int upd
 		update_interval = 0;
 	}
 	ret_info->update_time_interval = update_interval;
+	ret_info->prev_cmd_time = 0;
+	ret_info->prev_cmd_azimuth = NAN;
+	ret_info->prev_cmd_elevation = NAN;
 }
 
-void rotctld_track(const rotctld_info_t *info, double azimuth, double elevation)
+void rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
 {
-	char message[30];
+	time_t curr_time = time(NULL);
+	int elevation_int = (int)round(elevation);
+	int azimuth_int = (int)round(azimuth);
+	bool coordinates_differ = ((elevation_int != (int)round(info->prev_cmd_elevation)) || (azimuth_int != (int)round(info->prev_cmd_azimuth)));
+	bool use_update_interval = (info->update_time_interval > 0);
 
-	/* If positions are sent too often, rotctld will queue
-	   them and the antenna will lag behind. Therefore, we wait
-	   for confirmation from last command before sending the
-	   next. */
-	sock_readline(info->socket, message, sizeof(message));
+	//send when coordinates differ or when a update interval has been specified
+	if ((coordinates_differ && !use_update_interval) || (use_update_interval && ((curr_time - info->update_time_interval) >= info->prev_cmd_time))) {
+		info->prev_cmd_azimuth = azimuth;
+		info->prev_cmd_elevation = elevation;
+		info->prev_cmd_time = curr_time;
 
-	sprintf(message, "P %.2f %.2f\n", azimuth, elevation);
-	int len = strlen(message);
-	if (send(info->socket, message, len, 0) != len) {
-		bailout("Failed to send to rotctld");
-		exit(-1);
+		char message[30];
+
+		/* If positions are sent too often, rotctld will queue
+		   them and the antenna will lag behind. Therefore, we wait
+		   for confirmation from last command before sending the
+		   next. */
+		sock_readline(info->socket, message, sizeof(message));
+
+		sprintf(message, "P %.2f %.2f\n", azimuth, elevation);
+		int len = strlen(message);
+		if (send(info->socket, message, len, 0) != len) {
+			bailout("Failed to send to rotctld");
+			exit(-1);
+		}
 	}
 }
 

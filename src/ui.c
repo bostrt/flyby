@@ -1172,11 +1172,6 @@ void SingleTrack(int orbit_ind, predict_observer_t *qth, struct transponder_db *
 		double delay;
 		double loss;
 
-		//elevation and azimuth at previous timestep, for checking when to send messages to rotctld
-		int prev_elevation = 0;
-		int prev_azimuth = 0;
-		time_t prev_time = 0;
-
 		char ephemeris_string[MAX_NUM_CHARS];
 
 		char time_string[MAX_NUM_CHARS];
@@ -1509,20 +1504,8 @@ void SingleTrack(int orbit_ind, predict_observer_t *qth, struct transponder_db *
 
 
 			//send data to rotctld
-			if (obs.elevation*180.0/M_PI >= horizon) {
-				time_t curr_time = time(NULL);
-				int elevation = (int)round(obs.elevation*180.0/M_PI);
-				int azimuth = (int)round(obs.azimuth*180.0/M_PI);
-				bool coordinates_differ = (elevation != prev_elevation) || (azimuth != prev_azimuth);
-				bool use_update_interval = (rotctld->update_time_interval > 0);
-
-				//send when coordinates differ or when a update interval has been specified
-				if ((coordinates_differ && !use_update_interval) || (use_update_interval && ((curr_time - rotctld->update_time_interval) >= prev_time))) {
-					if (rotctld->connected) rotctld_track(rotctld, obs.azimuth*180.0/M_PI, obs.elevation*180.0/M_PI);
-					prev_elevation = elevation;
-					prev_azimuth = azimuth;
-					prev_time = curr_time;
-				}
+			if ((obs.elevation*180.0/M_PI >= horizon) && rotctld->connected) {
+				rotctld_track(rotctld, obs.azimuth*180.0/M_PI, obs.elevation*180.0/M_PI);
 			}
 
 			/* Get input from keyboard */
