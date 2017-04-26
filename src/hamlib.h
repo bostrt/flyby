@@ -30,6 +30,8 @@ typedef struct {
 	double tracking_horizon;
 	///Previous time at which command was sent
 	time_t prev_cmd_time;
+	///Whether first command has been sent, and whether we can guarantee that prev_cmd_azimuth/elevation contain correct values
+	bool first_cmd_sent;
 	///Previous sent azimuth
 	double prev_cmd_azimuth;
 	///Previous sent elevation
@@ -70,7 +72,7 @@ void rotctld_disconnect(rotctld_info_t *info);
  * Send track data to rotctld.
  *
  * Data is sent only when:
- *  - Input azi/ele differs from previously sent azi/ele more than the angle precision
+ *  - Input azi/ele differs from previously sent azi/ele more than the angle_precision field
  *  OR
  *  - Difference from previous time for the commands differs more than the time interval for updates
  *

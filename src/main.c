@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 		{{"rotctld-update-interval",	required_argument,	0,	FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL},
 			"SECS", "Send updates to rotctld other SECS seconds instead of when (azimuth,elevation) changes according to the current rotor precision"},
 		{{"rotctld-precision",		required_argument,	0,	FLYBY_OPT_ROTCTLD_PRECISION},
-			"DEGREES", "specify rotor angle precision. Defaults to direct comparison between rounded angles."},
+			"DEGREES", "specify rotor angle precision. Defaults to direct comparison between rounded angles. NOTE: This is not going to be accurate if specified, especially as the update will also be subject to the time granularity of single track mode. Both angles have to change more than the defined precision."},
 		{{"rigctld-uplink-host",		required_argument,	0,	'U'},
 			"HOST", "connect to specified rigctld server for uplink frequency steering"},
 		{{"rigctld-uplink-port",		required_argument,	0,	FLYBY_OPT_UPLINK_PORT},

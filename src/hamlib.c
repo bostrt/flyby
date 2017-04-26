@@ -79,8 +79,9 @@ void rotctld_connect(const char *rotctld_host, const char *rotctld_port, rotctld
 
 	ret_info->update_time_interval = 0;
 	ret_info->prev_cmd_time = 0;
-	ret_info->prev_cmd_azimuth = NAN;
-	ret_info->prev_cmd_elevation = NAN;
+	ret_info->prev_cmd_azimuth = 0;
+	ret_info->prev_cmd_elevation = 0;
+	ret_info->first_cmd_sent = false;
 	ret_info->angle_precision = ROTCTLD_DEFAULT_PRECISION;
 }
 
@@ -91,28 +92,52 @@ void rotctld_set_tracking_horizon(rotctld_info_t *info, double horizon)
 
 void rotctld_set_update_interval(rotctld_info_t *info, int time_interval)
 {
-	if (time_interval > 0) {
+	if (time_interval >= 0) {
 		info->update_time_interval = time_interval;
 	}
 }
 
 void rotctld_set_precision(rotctld_info_t *info, double precision)
 {
-	if (precision > 0) {
+	if (precision >= 0) {
 		info->angle_precision = precision;
 	}
 }
 
 bool angles_differ(double prev_angle, double angle, double precision)
 {
-	return (int)round(prev_angle) != (int)round(angle);
+	if (precision > 0) {
+		return fabs(angle - prev_angle) > precision;
+	} else {
+		//precision not defined, send update whenever the rounded angles change (precision somewhere between 0 and somewhat above 1 depending on circumstances)
+		return (int)round(prev_angle) != (int)round(angle);
+	}
+}
+
+bool rotctld_directions_differ(rotctld_info_t *info, double azimuth, double elevation)
+{
+	bool azimuth_differs = angles_differ(info->prev_cmd_azimuth, azimuth, info->angle_precision);
+	bool elevation_differs = angles_differ(info->prev_cmd_elevation, elevation, info->angle_precision);
+
+	if (info->angle_precision > 0) {
+		//both azimuth and elevation have to differ from previous value
+		return azimuth_differs && elevation_differs;
+	} else {
+		//at least one of the coordinates have to differ
+		return azimuth_differs || elevation_differs;
+	}
 }
 
 void rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
 {
 	time_t curr_time = time(NULL);
-	bool coordinates_differ = angles_differ(info->prev_cmd_azimuth, azimuth, info->angle_precision) || angles_differ(info->prev_cmd_elevation, elevation, info->angle_precision);
 	bool use_update_interval = (info->update_time_interval > 0);
+	bool coordinates_differ = rotctld_directions_differ(info, azimuth, elevation);
+
+	if (!info->first_cmd_sent) {
+		coordinates_differ = true;
+		info->first_cmd_sent = true;
+	}
 
 	//send when coordinates differ or when a update interval has been specified
 	if ((coordinates_differ && !use_update_interval) || (use_update_interval && ((curr_time - info->update_time_interval) >= info->prev_cmd_time))) {
