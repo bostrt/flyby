@@ -24,7 +24,7 @@ typedef struct {
 	char host[MAX_NUM_CHARS];
 	///Port
 	char port[MAX_NUM_CHARS];
-	///Time interval for rotctld update. 0 means that commands will be sent only when angles change. Defaults to 0.
+	///Time interval for rotctld update. Zero means that commands will be sent only when angles change. Defaults to 0.
 	int update_time_interval;
 	///Horizon above which we start tracking. Defaults to 0.
 	double tracking_horizon;
@@ -34,7 +34,7 @@ typedef struct {
 	double prev_cmd_azimuth;
 	///Previous sent elevation
 	double prev_cmd_elevation;
-	///How much angles should differ before we send an update to rotctld
+	///How much angles should differ before we send an update to rotctld. Zero means that updates will be sent when the rounded angle differs from the previous rounded angle. Defaults to 0.
 	double angle_precision;
 } rotctld_info_t;
 

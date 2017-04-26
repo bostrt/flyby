@@ -103,12 +103,15 @@ void rotctld_set_precision(rotctld_info_t *info, double precision)
 	}
 }
 
+bool angles_differ(double prev_angle, double angle, double precision)
+{
+	return (int)round(prev_angle) != (int)round(angle);
+}
+
 void rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
 {
 	time_t curr_time = time(NULL);
-	int elevation_int = (int)round(elevation);
-	int azimuth_int = (int)round(azimuth);
-	bool coordinates_differ = ((elevation_int != (int)round(info->prev_cmd_elevation)) || (azimuth_int != (int)round(info->prev_cmd_azimuth)));
+	bool coordinates_differ = angles_differ(info->prev_cmd_azimuth, azimuth, info->angle_precision) || angles_differ(info->prev_cmd_elevation, elevation, info->angle_precision);
 	bool use_update_interval = (info->update_time_interval > 0);
 
 	//send when coordinates differ or when a update interval has been specified
