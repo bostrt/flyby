@@ -24,6 +24,7 @@
 #define FLYBY_OPT_DOWNLINK_VFO 205
 #define FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL 206
 #define FLYBY_OPT_ADD_TLE 207
+#define FLYBY_OPT_ROTCTLD_PRECISION 208
 
 /**
  * Print flyby program usage to stdout.
@@ -42,6 +43,7 @@ int main(int argc, char **argv)
 	char rotctld_port[MAX_NUM_CHARS] = ROTCTLD_DEFAULT_PORT;
 	int rotctld_update_interval = 0;
 	double tracking_horizon = 0;
+	double tracking_precision = 0;
 
 	//rigctl uplink options
 	bool use_rigctld_uplink = false;
@@ -80,7 +82,9 @@ int main(int argc, char **argv)
 		{{"rotctld-horizon",		required_argument,	0,	'H'},
 			"HORIZON", "specify elevation threshold for when flyby will start tracking an orbit"},
 		{{"rotctld-update-interval",	required_argument,	0,	FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL},
-			"SECS", "Send updates to rotctld other SECS seconds instead of when (azimuth,elevation) changes"},
+			"SECS", "Send updates to rotctld other SECS seconds instead of when (azimuth,elevation) changes according to the current rotor precision"},
+		{{"rotctld-precision",		required_argument,	0,	FLYBY_OPT_ROTCTLD_PRECISION},
+			"DEGREES", "specify rotor angle precision. Defaults to 1 degree"},
 		{{"rigctld-uplink-host",		required_argument,	0,	'U'},
 			"HOST", "connect to specified rigctld server for uplink frequency steering"},
 		{{"rigctld-uplink-port",		required_argument,	0,	FLYBY_OPT_UPLINK_PORT},
@@ -135,6 +139,9 @@ int main(int argc, char **argv)
 				break;
 			case FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL: //once per second-option
 				rotctld_update_interval = strtod(optarg, NULL);
+				break;
+			case FLYBY_OPT_ROTCTLD_PRECISION: //rotor angle precision
+				tracking_precision = strtod(optarg, NULL);
 				break;
 			case 'U': //uplink
 				use_rigctld_uplink = true;
@@ -229,7 +236,7 @@ int main(int argc, char **argv)
 		rotctld_connect(rotctld_host, rotctld_port, &rotctld);
 		rotctld_set_update_interval(&rotctld, rotctld_update_interval);
 		rotctld_set_tracking_horizon(&rotctld, tracking_horizon);
-		//void rotctld_set_precision(rotctld_info_t *info, double precision);
+		rotctld_set_precision(&rotctld, tracking_precision);
 	}
 
 	//check rigctld input arguments

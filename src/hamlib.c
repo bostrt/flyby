@@ -98,7 +98,9 @@ void rotctld_set_update_interval(rotctld_info_t *info, int time_interval)
 
 void rotctld_set_precision(rotctld_info_t *info, double precision)
 {
-	info->angle_precision = precision;
+	if (precision > 0) {
+		info->angle_precision = precision;
+	}
 }
 
 void rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
