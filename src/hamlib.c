@@ -35,7 +35,7 @@ int sock_readline(int sockd, char *message, size_t bufsize)
 	return pos;
 }
 
-void rotctld_connect(const char *rotctld_host, const char *rotctld_port, int update_interval, double tracking_horizon, rotctld_info_t *ret_info)
+void rotctld_connect(const char *rotctld_host, const char *rotctld_port, rotctld_info_t *ret_info)
 {
 	struct addrinfo hints, *servinfo, *servinfop;
 	memset(&hints, 0, sizeof(hints));
@@ -75,15 +75,30 @@ void rotctld_connect(const char *rotctld_host, const char *rotctld_port, int upd
 	ret_info->connected = true;
 	strncpy(ret_info->host, rotctld_host, MAX_NUM_CHARS);
 	strncpy(ret_info->port, rotctld_port, MAX_NUM_CHARS);
-	ret_info->tracking_horizon = tracking_horizon;
+	ret_info->tracking_horizon = 0;
 
-	if (update_interval < 0) {
-		update_interval = 0;
-	}
-	ret_info->update_time_interval = update_interval;
+	ret_info->update_time_interval = 0;
 	ret_info->prev_cmd_time = 0;
 	ret_info->prev_cmd_azimuth = NAN;
 	ret_info->prev_cmd_elevation = NAN;
+	ret_info->angle_precision = ROTCTLD_DEFAULT_PRECISION;
+}
+
+void rotctld_set_tracking_horizon(rotctld_info_t *info, double horizon)
+{
+	info->tracking_horizon = horizon;
+}
+
+void rotctld_set_update_interval(rotctld_info_t *info, int time_interval)
+{
+	if (time_interval > 0) {
+		info->update_time_interval = time_interval;
+	}
+}
+
+void rotctld_set_precision(rotctld_info_t *info, double precision)
+{
+	info->angle_precision = precision;
 }
 
 void rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
