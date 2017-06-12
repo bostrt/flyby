@@ -198,7 +198,10 @@ void rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld
 	strncpy(ret_info->port, rigctld_port, MAX_NUM_CHARS);
 
 	//get list of VFO names supported by backend
-	rigctld_get_vfo_names(ret_info, MAX_NUM_CHARS, &(ret_info->vfo_names));
+	rigctld_get_vfo_names(ret_info, &(ret_info->vfo_names));
+
+	//get currently set VFO name from rigctld
+	rigctld_get_current_vfo(ret_info, MAX_NUM_CHARS, ret_info->vfo_name);
 }
 
 void rigctld_send_vfo_command(int socket, const char *vfo_name)
@@ -266,7 +269,29 @@ double rigctld_read_frequency(const rigctld_info_t *info)
 	return freq;
 }
 
-void rigctld_get_vfo_names(rigctld_info_t *info, size_t ret_string_length, string_array_t *vfo_names)
+void rigctld_get_current_vfo(rigctld_info_t *info, int string_buffer_length, char *current_vfo)
+{
+	char message[256];
+	int len;
+
+	//pending message
+	sock_readline(info->socket, message, sizeof(message));
+
+	sprintf(message, "v\n");
+	len = strlen(message);
+	if (send(info->socket, message, len, 0) != len)	{
+		bailout("Failed to send to rigctld");
+		exit(-1);
+	}
+
+	sock_readline(info->socket, message, sizeof(message));
+	strncpy(current_vfo, message, string_buffer_length);
+
+	//prepare new pending reply
+	rigctld_bootstrap_response(info->socket);
+}
+
+void rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_names)
 {
 	char message[256];
 	int len;
