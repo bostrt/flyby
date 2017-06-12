@@ -240,11 +240,19 @@ int main(int argc, char **argv)
 	//connect to rigctld
 	rigctld_info_t uplink = {0};
 	if (use_rigctld_uplink) {
-		rigctld_connect(rigctld_uplink_host, rigctld_uplink_port, rigctld_uplink_vfo, &uplink);
+		rigctld_connect(rigctld_uplink_host, rigctld_uplink_port, &uplink);
+
+		if (strlen(rigctld_uplink_vfo) > 0) {
+			rigctld_set_vfo(&uplink, rigctld_uplink_vfo);
+		}
 	}
 	rigctld_info_t downlink = {0};
 	if (use_rigctld_downlink) {
-		rigctld_connect(rigctld_downlink_host, rigctld_downlink_port, rigctld_downlink_vfo, &downlink);
+		rigctld_connect(rigctld_downlink_host, rigctld_downlink_port, &downlink);
+
+		if (strlen(rigctld_downlink_vfo) > 0) {
+			rigctld_set_vfo(&downlink, rigctld_downlink_vfo);
+		}
 	}
 
 	//read flyby config files

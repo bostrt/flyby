@@ -97,10 +97,16 @@ void rotctld_set_precision(rotctld_info_t *info, double precision);
  *
  * \param hostname Hostname/IP address
  * \param port Port
- * \param vfo_name VFO name
  * \param ret_info Returned rigctld connection instance
  **/
-void rigctld_connect(const char *hostname, const char *port, const char *vfo_name, rigctld_info_t *ret_info);
+void rigctld_connect(const char *hostname, const char *port, rigctld_info_t *ret_info);
+
+/**
+ * Set VFO name to be used by this rigctld connection instance. Will not switch VFO in rigctld until set_frequency.
+ *
+ * \param vfo_name
+ **/
+void rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name);
 
 /**
  * Disconnect from rigctld.

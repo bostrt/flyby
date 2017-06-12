@@ -144,7 +144,19 @@ void rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
 	}
 }
 
-void rigctld_connect(const char *rigctld_host, const char *rigctld_port, const char *vfo_name, rigctld_info_t *ret_info)
+void rigctld_bootstrap_response(int socket)
+{
+	char message[256];
+	int len;
+	sprintf(message, "f\n");
+	len = strlen(message);
+	if (send(socket, message, len, 0) != len) {
+		bailout("Failed to send to rigctld");
+		exit(-1);
+	}
+}
+
+void rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld_info_t *ret_info)
 {
 	struct addrinfo hints, *servinfo, *servinfop;
 	memset(&hints, 0, sizeof(hints));
@@ -178,13 +190,28 @@ void rigctld_connect(const char *rigctld_host, const char *rigctld_port, const c
 	freeaddrinfo(servinfo);
 	/* FreqDataNet() will wait for confirmation of a command before sending
 	   the next so we bootstrap this by asking for the current frequency */
-	send(rigctld_socket, "f\n", 2, 0);
+	rigctld_bootstrap_response(rigctld_socket);
 
 	ret_info->socket = rigctld_socket;
-	strncpy(ret_info->vfo_name, vfo_name, MAX_NUM_CHARS);
 	ret_info->connected = true;
 	strncpy(ret_info->host, rigctld_host, MAX_NUM_CHARS);
 	strncpy(ret_info->port, rigctld_port, MAX_NUM_CHARS);
+}
+
+void rigctld_send_vfo_command(int socket, const char *vfo_name)
+{
+	if (strlen(vfo_name) > 0)	{
+		char message[256];
+		int len;
+		sprintf(message, "V %s\n", vfo_name);
+		len = strlen(message);
+		usleep(100); // hack: avoid VFO selection racing
+		if (send(socket, message, len, 0) != len)	{
+			bailout("Failed to send to rigctld");
+			exit(-1);
+		}
+		sock_readline(socket, message, sizeof(message));
+	}
 }
 
 void rigctld_set_frequency(const rigctld_info_t *info, double frequency)
@@ -198,16 +225,7 @@ void rigctld_set_frequency(const rigctld_info_t *info, double frequency)
 	   next. */
 	sock_readline(info->socket, message, sizeof(message));
 
-	if (strlen(info->vfo_name) > 0)	{
-		sprintf(message, "V %s\n", info->vfo_name);
-		len = strlen(message);
-		usleep(100); // hack: avoid VFO selection racing
-		if (send(info->socket, message, len, 0) != len)	{
-			bailout("Failed to send to rigctld");
-			exit(-1);
-		}
-		sock_readline(info->socket, message, sizeof(message));
-	}
+	rigctld_send_vfo_command(info->socket, info->vfo_name);
 
 	sprintf(message, "F %.0f\n", frequency*1000000);
 	len = strlen(message);
@@ -216,6 +234,7 @@ void rigctld_set_frequency(const rigctld_info_t *info, double frequency)
 		exit(-1);
 	}
 }
+
 
 double rigctld_read_frequency(const rigctld_info_t *info)
 {
@@ -226,16 +245,7 @@ double rigctld_read_frequency(const rigctld_info_t *info)
 	/* Read pending return message */
 	sock_readline(info->socket, message, sizeof(message));
 
-	if (strlen(info->vfo_name) > 0)	{
-		sprintf(message, "V %s\n", info->vfo_name);
-		len = strlen(message);
-		usleep(100); // hack: avoid VFO selection racing
-		if (send(info->socket, message, len, 0) != len)	{
-			bailout("Failed to send to rigctld");
-			exit(-1);
-		}
-		sock_readline(info->socket, message, sizeof(message));
-	}
+	rigctld_send_vfo_command(info->socket, info->vfo_name);
 
 	sprintf(message, "f\n");
 	len = strlen(message);
@@ -247,14 +257,46 @@ double rigctld_read_frequency(const rigctld_info_t *info)
 	sock_readline(info->socket, message, sizeof(message));
 	freq=atof(message)/1.0e6;
 
-	sprintf(message, "f\n");
+	//prepare new pending reply
+	rigctld_bootstrap_response(info->socket);
+
+	return freq;
+}
+
+void rigctld_get_vfo_names_string(rigctld_info_t *info, size_t ret_string_length, char *vfo_names)
+{
+	char message[256];
+	int len;
+	double freq;
+
+	//pending return message
+	sock_readline(info->socket, message, sizeof(message));
+
+	//get VFO names
+	sprintf(message, "V ?\n");
 	len = strlen(message);
 	if (send(info->socket, message, len, 0) != len)	{
 		bailout("Failed to send to rigctld");
 		exit(-1);
 	}
+	sock_readline(info->socket, message, sizeof(message));
+	strncpy(vfo_names, message, ret_string_length);
 
-	return freq;
+	//prepare new pending reply
+	rigctld_bootstrap_response(info->socket);
+}
+
+void rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name)
+{
+	char vfo_names[MAX_NUM_CHARS];
+	rigctld_get_vfo_names_string(ret_info, MAX_NUM_CHARS, vfo_names);
+	const char *occurrence = strstr(vfo_names, vfo_name);
+	if (occurrence == NULL) {
+		fprintf(stderr, "Specified VFO name %s not supported by backend. Supported names: %s", vfo_name, vfo_names);
+		exit(1);
+	}
+
+	strncpy(ret_info->vfo_name, vfo_name, MAX_NUM_CHARS);
 }
 
 void rigctld_disconnect(rigctld_info_t *info)
