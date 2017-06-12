@@ -857,10 +857,10 @@ int singletrack_track_satellite(const char *satellite_name, predict_observer_t *
 
 			//set doppler-shifted downlink/uplink to rig
 			if (link_status.in_range && downlink_info->connected && link_status.downlink_update && (link_status.downlink != 0.0)) {
-				rigctld_set_frequency(downlink_info, link_status.downlink_doppler);
+				rigctld_fail_on_errors(rigctld_set_frequency(downlink_info, link_status.downlink_doppler));
 			}
 			if (link_status.in_range && uplink_info->connected && link_status.uplink_update && (link_status.uplink != 0.0)) {
-				rigctld_set_frequency(uplink_info, link_status.uplink_doppler);
+				rigctld_fail_on_errors(rigctld_set_frequency(uplink_info, link_status.uplink_doppler));
 			}
 		}
 

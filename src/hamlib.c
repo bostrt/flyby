@@ -144,23 +144,28 @@ void rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
 	}
 }
 
-void rigctld_bootstrap_response(int socket)
+rigctld_error rigctld_send_message(int socket, char *message)
 {
-	char message[256];
 	int len;
-	sprintf(message, "f\n");
 	len = strlen(message);
 	if (send(socket, message, len, 0) != len) {
-		bailout("Failed to send to rigctld");
-		exit(-1);
+		return RIGCTLD_SEND_FAILED;
 	}
+	return RIGCTLD_NO_ERR;
 }
 
-void rigctld_get_current_vfo(rigctld_info_t *info, int string_buffer_length, char *current_vfo);
+rigctld_error rigctld_bootstrap_response(int socket)
+{
+	char message[256];
+	sprintf(message, "f\n");
+	return rigctld_send_message(socket, message);
+}
 
-void rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_names);
+rigctld_error rigctld_get_current_vfo(rigctld_info_t *info, int string_buffer_length, char *current_vfo);
 
-void rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld_info_t *ret_info)
+rigctld_error rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_names);
+
+rigctld_error rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld_info_t *ret_info)
 {
 	struct addrinfo hints, *servinfo, *servinfop;
 	memset(&hints, 0, sizeof(hints));
@@ -169,8 +174,7 @@ void rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld
 	int rigctld_socket = 0;
 	int retval = getaddrinfo(rigctld_host, rigctld_port, &hints, &servinfo);
 	if (retval != 0) {
-		bailout("getaddrinfo error");
-		exit(-1);
+		return RIGCTLD_GETADDRINFO_ERR;
 	}
 
 	for(servinfop = servinfo; servinfop != NULL; servinfop = servinfop->ai_next) {
@@ -186,15 +190,15 @@ void rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld
 		break;
 	}
 	if (servinfop == NULL) {
-		char error_message[MAX_NUM_CHARS];
-		snprintf(error_message, MAX_NUM_CHARS, "Unable to connect to rigctld on %s:%s", rigctld_host, rigctld_port);
-		bailout(error_message);
-		exit(-1);
+		return RIGCTLD_CONNECTION_FAILED;
 	}
 	freeaddrinfo(servinfo);
 	/* FreqDataNet() will wait for confirmation of a command before sending
 	   the next so we bootstrap this by asking for the current frequency */
-	rigctld_bootstrap_response(rigctld_socket);
+	rigctld_error ret_err = rigctld_bootstrap_response(rigctld_socket);
+	if (ret_err != RIGCTLD_NO_ERR) {
+		return ret_err;
+	}
 
 	ret_info->socket = rigctld_socket;
 	ret_info->connected = true;
@@ -202,32 +206,38 @@ void rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld
 	strncpy(ret_info->port, rigctld_port, MAX_NUM_CHARS);
 
 	//get list of VFO names supported by backend
-	rigctld_get_vfo_names(ret_info, &(ret_info->vfo_names));
+	ret_err = rigctld_get_vfo_names(ret_info, &(ret_info->vfo_names));
+	if (ret_err != RIGCTLD_NO_ERR) {
+		return ret_err;
+	}
 
 	//get currently set VFO name from rigctld
-	rigctld_get_current_vfo(ret_info, MAX_NUM_CHARS, ret_info->vfo_name);
+	ret_err = rigctld_get_current_vfo(ret_info, MAX_NUM_CHARS, ret_info->vfo_name);
+	if (ret_err != RIGCTLD_NO_ERR) {
+		return ret_err;
+	}
+	return RIGCTLD_NO_ERR;
 }
 
-void rigctld_send_vfo_command(int socket, const char *vfo_name)
+rigctld_error rigctld_send_vfo_command(int socket, const char *vfo_name)
 {
 	if (strlen(vfo_name) > 0)	{
 		char message[256];
-		int len;
 		sprintf(message, "V %s\n", vfo_name);
-		len = strlen(message);
 		usleep(100); // hack: avoid VFO selection racing
-		if (send(socket, message, len, 0) != len)	{
-			bailout("Failed to send to rigctld");
-			exit(-1);
+
+		rigctld_error ret_err = rigctld_send_message(socket, message);
+		if (ret_err != RIGCTLD_NO_ERR) {
+			return ret_err;
 		}
 		sock_readline(socket, message, sizeof(message));
 	}
+	return RIGCTLD_NO_ERR;
 }
 
-void rigctld_set_frequency(const rigctld_info_t *info, double frequency)
+rigctld_error rigctld_set_frequency(const rigctld_info_t *info, double frequency)
 {
 	char message[256];
-	int len;
 
 	/* If frequencies is sent too often, rigctld will queue
 	   them and the radio will lag behind. Therefore, we wait
@@ -235,33 +245,57 @@ void rigctld_set_frequency(const rigctld_info_t *info, double frequency)
 	   next. */
 	sock_readline(info->socket, message, sizeof(message));
 
-	rigctld_send_vfo_command(info->socket, info->vfo_name);
+	rigctld_error ret_err = rigctld_send_vfo_command(info->socket, info->vfo_name);
+	if (ret_err != RIGCTLD_NO_ERR) {
+		return ret_err;
+	}
 
 	sprintf(message, "F %.0f\n", frequency*1000000);
-	len = strlen(message);
-	if (send(info->socket, message, len, 0) != len)	{
-		bailout("Failed to send to rigctld");
+	return rigctld_send_message(info->socket, message);
+}
+
+void rigctld_fail_on_errors(rigctld_error errorcode)
+{
+	if (errorcode != RIGCTLD_NO_ERR) {
+		bailout(rigctld_error_message(errorcode));
 		exit(-1);
 	}
 }
 
+const char *rigctld_error_message(rigctld_error errorcode)
+{
+	switch (errorcode) {
+		case RIGCTLD_NO_ERR:
+			return "No error.";
+		case RIGCTLD_GETADDRINFO_ERR:
+			return "getaddrinfo error.";
+		case RIGCTLD_CONNECTION_FAILED:
+			return "Unable to connect to rigctld.";
+		case RIGCTLD_SEND_FAILED:
+			return "Unable to send to rigctld.";
+		case RIGCTLD_VFO_NAME_NOT_SUPPORTED:
+			return "Specified VFO name not supported by backend.";
+	}
+	return "Unsupported error code.";
+}
 
 double rigctld_read_frequency(const rigctld_info_t *info)
 {
 	char message[256];
-	int len;
 	double freq;
 
 	/* Read pending return message */
 	sock_readline(info->socket, message, sizeof(message));
 
-	rigctld_send_vfo_command(info->socket, info->vfo_name);
+	rigctld_error ret_err = rigctld_send_vfo_command(info->socket, info->vfo_name);
+	if (ret_err != RIGCTLD_NO_ERR) {
+//		return ret_err;
+	}
 
 	sprintf(message, "f\n");
-	len = strlen(message);
-	if (send(info->socket, message, len, 0) != len)	{
-		bailout("Failed to send to rigctld");
-		exit(-1);
+	ret_err = rigctld_send_message(info->socket, message);
+	if (ret_err != RIGCTLD_NO_ERR) {
+//		return ret_err;
 	}
 
 	sock_readline(info->socket, message, sizeof(message));
@@ -269,51 +303,46 @@ double rigctld_read_frequency(const rigctld_info_t *info)
 
 	//prepare new pending reply
 	rigctld_bootstrap_response(info->socket);
+//FIXME: fix return messages in this function.
 
 	return freq;
 }
 
-void rigctld_get_current_vfo(rigctld_info_t *info, int string_buffer_length, char *current_vfo)
+rigctld_error rigctld_get_current_vfo(rigctld_info_t *info, int string_buffer_length, char *current_vfo)
 {
 	char message[256];
-	int len;
 
 	//pending message
 	sock_readline(info->socket, message, sizeof(message));
 
 	sprintf(message, "v\n");
-	len = strlen(message);
-	if (send(info->socket, message, len, 0) != len)	{
-		bailout("Failed to send to rigctld");
-		exit(-1);
+	rigctld_error ret_err = rigctld_send_message(info->socket, message);
+	if (ret_err != RIGCTLD_NO_ERR) {
+		return ret_err;
 	}
 
 	sock_readline(info->socket, message, sizeof(message));
 	strncpy(current_vfo, message, string_buffer_length);
 
 	//prepare new pending reply
-	rigctld_bootstrap_response(info->socket);
+	return rigctld_bootstrap_response(info->socket);
 }
 
-void rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_names)
+rigctld_error rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_names)
 {
 	char message[256];
-	int len;
 
 	//pending return message
 	sock_readline(info->socket, message, sizeof(message));
 
 	//get VFO names
 	sprintf(message, "V ?\n");
-	len = strlen(message);
-	if (send(info->socket, message, len, 0) != len)	{
-		bailout("Failed to send to rigctld");
-		exit(-1);
+	rigctld_error ret_err = rigctld_send_message(info->socket, message);
+	if (ret_err != RIGCTLD_NO_ERR) {
+		return ret_err;
 	}
-	sock_readline(info->socket, message, sizeof(message));
 
-	//prepare new pending reply
-	rigctld_bootstrap_response(info->socket);
+	sock_readline(info->socket, message, sizeof(message));
 
 	//split names in output
 	for (int i=0; i < strlen(message); i++) {
@@ -322,20 +351,19 @@ void rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_names)
 		}
 	}
 	stringsplit(message, vfo_names);
+
+	//prepare new pending reply
+	return rigctld_bootstrap_response(info->socket);
 }
 
-void rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name)
+rigctld_error rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name)
 {
 	if (string_array_find(&(ret_info->vfo_names), vfo_name) == -1) {
-		fprintf(stderr, "Specified VFO name %s not supported by backend. Supported names:", vfo_name);
-		for (int i=0; i < string_array_size(&(ret_info->vfo_names)); i++) {
-			fprintf(stderr, " %s", string_array_get(&(ret_info->vfo_names), i));
-		}
-		fprintf(stderr, "\n");
-		exit(1);
+		return RIGCTLD_VFO_NAME_NOT_SUPPORTED;
 	}
 
 	strncpy(ret_info->vfo_name, vfo_name, MAX_NUM_CHARS);
+	return RIGCTLD_NO_ERR;
 }
 
 void rigctld_disconnect(rigctld_info_t *info)

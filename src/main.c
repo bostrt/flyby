@@ -240,18 +240,28 @@ int main(int argc, char **argv)
 	//connect to rigctld
 	rigctld_info_t uplink = {0};
 	if (use_rigctld_uplink) {
-		rigctld_connect(rigctld_uplink_host, rigctld_uplink_port, &uplink);
+		rigctld_fail_on_errors(rigctld_connect(rigctld_uplink_host, rigctld_uplink_port, &uplink));
 
 		if (strlen(rigctld_uplink_vfo) > 0) {
-			rigctld_set_vfo(&uplink, rigctld_uplink_vfo);
+			rigctld_fail_on_errors(rigctld_set_vfo(&uplink, rigctld_uplink_vfo));
+		}
+	} else {
+		if ((strlen(rigctld_uplink_vfo) > 0) || (strlen(rigctld_uplink_port) > 0) || (strlen(rigctld_uplink_host) > 0)) {
+			fprintf(stderr, "uplink rigctld options specified, but uplink rigctld not enabled. Did you forget --rigctld-uplink-host/-U?\n");
+			exit(-1);
 		}
 	}
 	rigctld_info_t downlink = {0};
 	if (use_rigctld_downlink) {
-		rigctld_connect(rigctld_downlink_host, rigctld_downlink_port, &downlink);
+		rigctld_fail_on_errors(rigctld_connect(rigctld_downlink_host, rigctld_downlink_port, &downlink));
 
 		if (strlen(rigctld_downlink_vfo) > 0) {
-			rigctld_set_vfo(&downlink, rigctld_downlink_vfo);
+			rigctld_fail_on_errors(rigctld_set_vfo(&downlink, rigctld_downlink_vfo));
+		}
+	} else {
+		if ((strlen(rigctld_downlink_vfo) > 0) || (strlen(rigctld_downlink_port) > 0) || (strlen(rigctld_downlink_host) > 0)) {
+			fprintf(stderr, "downlink rigctld options specified, but downlink rigctld not enabled. Did you forget --rigctld-downlink-host/-D?\n");
+			exit(-1);
 		}
 	}
 

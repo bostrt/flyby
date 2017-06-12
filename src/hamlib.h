@@ -90,6 +90,21 @@ void rotctld_set_tracking_horizon(rotctld_info_t *info, double horizon);
  **/
 void rotctld_set_update_interval(rotctld_info_t *info, int time_interval);
 
+
+enum rigctld_error_e {
+	RIGCTLD_NO_ERR = 0,
+	RIGCTLD_GETADDRINFO_ERR = -1,
+	RIGCTLD_CONNECTION_FAILED = -2,
+	RIGCTLD_SEND_FAILED = -3,
+	RIGCTLD_VFO_NAME_NOT_SUPPORTED = -5
+};
+
+typedef enum rigctld_error_e rigctld_error;
+
+void rigctld_fail_on_errors(rigctld_error errorcode);
+
+const char *rigctld_error_message(rigctld_error errorcode);
+
 /**
  * Connect to rigctld. 
  *
@@ -97,14 +112,14 @@ void rotctld_set_update_interval(rotctld_info_t *info, int time_interval);
  * \param port Port
  * \param ret_info Returned rigctld connection instance
  **/
-void rigctld_connect(const char *hostname, const char *port, rigctld_info_t *ret_info);
+rigctld_error rigctld_connect(const char *hostname, const char *port, rigctld_info_t *ret_info);
 
 /**
  * Set VFO name to be used by this rigctld connection instance. Will not switch VFO in rigctld until set_frequency.
  *
  * \param vfo_name
  **/
-void rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name);
+rigctld_error rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name);
 
 /**
  * Disconnect from rigctld.
@@ -118,7 +133,7 @@ void rigctld_disconnect(rigctld_info_t *info);
  * \param info rigctld connection instance
  * \param frequency Frequency in MHz
  **/
-void rigctld_set_frequency(const rigctld_info_t *info, double frequency);
+rigctld_error rigctld_set_frequency(const rigctld_info_t *info, double frequency);
 
 /**
  * Read frequency from rigctld. 
