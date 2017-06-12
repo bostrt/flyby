@@ -4,6 +4,7 @@
 #include "defines.h"
 #include <stdbool.h>
 #include <time.h>
+#include "string_array.h"
 
 #define ROTCTLD_DEFAULT_HOST "localhost"
 #define ROTCTLD_DEFAULT_PORT "4533\0\0"
@@ -46,6 +47,8 @@ typedef struct {
 	char port[MAX_NUM_CHARS];
 	///VFO name
 	char vfo_name[MAX_NUM_CHARS];
+	///Possible VFO names obtained from backend
+	string_array_t vfo_names;
 } rigctld_info_t;
 
 /**
@@ -86,11 +89,6 @@ void rotctld_set_tracking_horizon(rotctld_info_t *info, double horizon);
  * Set current update interval.
  **/
 void rotctld_set_update_interval(rotctld_info_t *info, int time_interval);
-
-/**
- * Set current rotor precision in degrees.
- **/
-void rotctld_set_precision(rotctld_info_t *info, double precision);
 
 /**
  * Connect to rigctld. 

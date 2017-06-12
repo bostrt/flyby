@@ -196,6 +196,17 @@ void rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld
 	ret_info->connected = true;
 	strncpy(ret_info->host, rigctld_host, MAX_NUM_CHARS);
 	strncpy(ret_info->port, rigctld_port, MAX_NUM_CHARS);
+
+	//get list of VFO names supported by backend
+	char vfo_names[MAX_NUM_CHARS];
+	rigctld_get_vfo_names_string(ret_info, MAX_NUM_CHARS, vfo_names);
+	for (int i=0; i < strlen(vfo_names); i++) {
+		if ((vfo_names[i] == ' ') || (vfo_names[i] == '\n')) {
+			vfo_names[i] = ':';
+		}
+	}
+	stringsplit(vfo_names, &(ret_info->vfo_names));
+
 }
 
 void rigctld_send_vfo_command(int socket, const char *vfo_name)
@@ -267,7 +278,6 @@ void rigctld_get_vfo_names_string(rigctld_info_t *info, size_t ret_string_length
 {
 	char message[256];
 	int len;
-	double freq;
 
 	//pending return message
 	sock_readline(info->socket, message, sizeof(message));
@@ -288,11 +298,12 @@ void rigctld_get_vfo_names_string(rigctld_info_t *info, size_t ret_string_length
 
 void rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name)
 {
-	char vfo_names[MAX_NUM_CHARS];
-	rigctld_get_vfo_names_string(ret_info, MAX_NUM_CHARS, vfo_names);
-	const char *occurrence = strstr(vfo_names, vfo_name);
-	if (occurrence == NULL) {
-		fprintf(stderr, "Specified VFO name %s not supported by backend. Supported names: %s", vfo_name, vfo_names);
+	if (string_array_find(&(ret_info->vfo_names), vfo_name) == -1) {
+		fprintf(stderr, "Specified VFO name %s not supported by backend. Supported names:", vfo_name);
+		for (int i=0; i < string_array_size(&(ret_info->vfo_names)); i++) {
+			fprintf(stderr, " %s", string_array_get(&(ret_info->vfo_names), i));
+		}
+		fprintf(stderr, "\n");
 		exit(1);
 	}
 
