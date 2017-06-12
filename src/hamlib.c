@@ -198,15 +198,7 @@ void rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld
 	strncpy(ret_info->port, rigctld_port, MAX_NUM_CHARS);
 
 	//get list of VFO names supported by backend
-	char vfo_names[MAX_NUM_CHARS];
-	rigctld_get_vfo_names_string(ret_info, MAX_NUM_CHARS, vfo_names);
-	for (int i=0; i < strlen(vfo_names); i++) {
-		if ((vfo_names[i] == ' ') || (vfo_names[i] == '\n')) {
-			vfo_names[i] = ':';
-		}
-	}
-	stringsplit(vfo_names, &(ret_info->vfo_names));
-
+	rigctld_get_vfo_names(ret_info, MAX_NUM_CHARS, &(ret_info->vfo_names));
 }
 
 void rigctld_send_vfo_command(int socket, const char *vfo_name)
@@ -274,7 +266,7 @@ double rigctld_read_frequency(const rigctld_info_t *info)
 	return freq;
 }
 
-void rigctld_get_vfo_names_string(rigctld_info_t *info, size_t ret_string_length, char *vfo_names)
+void rigctld_get_vfo_names(rigctld_info_t *info, size_t ret_string_length, string_array_t *vfo_names)
 {
 	char message[256];
 	int len;
@@ -290,10 +282,17 @@ void rigctld_get_vfo_names_string(rigctld_info_t *info, size_t ret_string_length
 		exit(-1);
 	}
 	sock_readline(info->socket, message, sizeof(message));
-	strncpy(vfo_names, message, ret_string_length);
 
 	//prepare new pending reply
 	rigctld_bootstrap_response(info->socket);
+
+	//split names in output
+	for (int i=0; i < strlen(message); i++) {
+		if ((message[i] == ' ') || (message[i] == '\n')) {
+			message[i] = ':';
+		}
+	}
+	stringsplit(message, vfo_names);
 }
 
 void rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name)
