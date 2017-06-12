@@ -451,6 +451,7 @@ const char *sat_status_string(enum satellite_status satellite_status)
 #define TRANSPONDER_TXRX_DESC_COL 29
 #define TRANSPONDER_PATHLOSS_DESC_COL 57
 #define TRANSPONDER_START_COL 1
+#define TRANSPONDER_VFO_COL (TRANSPONDER_PATHLOSS_DESC_COL - 8)
 
 #define TRANSPONDER_FREQ_COL (TRANSPONDER_START_COL+10)
 #define TRANSPONDER_DELAY_COL TRANSPONDER_FREQ_COL
@@ -481,6 +482,7 @@ void singletrack_clear_downlink_dynamic_fields()
 {
 	mvprintw(TRANSPONDER_DOWNLINK_ROW,TRANSPONDER_DOPP_COL,"                ");
 	mvprintw(TRANSPONDER_DOWNLINK_ROW,TRANSPONDER_LOSS_COL,"          ");
+	mvprintw(TRANSPONDER_DOWNLINK_ROW,TRANSPONDER_VFO_COL,"       ");
 }
 
 void singletrack_clear_downlink_fields()
@@ -493,6 +495,7 @@ void singletrack_clear_uplink_dynamic_fields()
 {
 	mvprintw(TRANSPONDER_UPLINK_ROW,TRANSPONDER_DOPP_COL,"                ");
 	mvprintw(TRANSPONDER_UPLINK_ROW,TRANSPONDER_LOSS_COL,"          ");
+	mvprintw(TRANSPONDER_UPLINK_ROW,TRANSPONDER_VFO_COL,"       ");
 }
 
 void singletrack_clear_uplink_fields()
@@ -843,6 +846,14 @@ int singletrack_track_satellite(const char *satellite_name, predict_observer_t *
 
 			//print link information to screen
 			singletrack_print_link_information(&link_status);
+
+			//print VFO names
+			if (downlink_info->connected && (link_status.downlink != 0.0) && (link_status.in_range)) {
+				mvprintw(TRANSPONDER_DOWNLINK_ROW, TRANSPONDER_VFO_COL, "(%s)", downlink_info->vfo_name);
+			}
+			if (uplink_info->connected && (link_status.uplink != 0.0) && (link_status.in_range)) {
+				mvprintw(TRANSPONDER_UPLINK_ROW, TRANSPONDER_VFO_COL, "(%s)", uplink_info->vfo_name);
+			}
 
 			//set doppler-shifted downlink/uplink to rig
 			if (link_status.in_range && downlink_info->connected && link_status.downlink_update && (link_status.downlink != 0.0)) {
