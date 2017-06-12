@@ -156,6 +156,10 @@ void rigctld_bootstrap_response(int socket)
 	}
 }
 
+void rigctld_get_current_vfo(rigctld_info_t *info, int string_buffer_length, char *current_vfo);
+
+void rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_names);
+
 void rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld_info_t *ret_info)
 {
 	struct addrinfo hints, *servinfo, *servinfop;
