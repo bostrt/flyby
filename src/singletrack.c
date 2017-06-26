@@ -848,10 +848,10 @@ int singletrack_track_satellite(const char *satellite_name, predict_observer_t *
 			singletrack_print_link_information(&link_status);
 
 			//print VFO names
-			if (downlink_info->connected && (link_status.downlink != 0.0) && (link_status.in_range)) {
+			if (downlink_info->connected && (link_status.downlink != 0.0) && (link_status.in_range) && (strlen(downlink_info->vfo_name) > 0)) {
 				mvprintw(TRANSPONDER_DOWNLINK_ROW, TRANSPONDER_VFO_COL, "(%s)", downlink_info->vfo_name);
 			}
-			if (uplink_info->connected && (link_status.uplink != 0.0) && (link_status.in_range)) {
+			if (uplink_info->connected && (link_status.uplink != 0.0) && (link_status.in_range) && (strlen(uplink_info->vfo_name) > 0)) {
 				mvprintw(TRANSPONDER_UPLINK_ROW, TRANSPONDER_VFO_COL, "(%s)", uplink_info->vfo_name);
 			}
 

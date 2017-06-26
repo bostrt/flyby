@@ -205,17 +205,6 @@ rigctld_error rigctld_connect(const char *rigctld_host, const char *rigctld_port
 	strncpy(ret_info->host, rigctld_host, MAX_NUM_CHARS);
 	strncpy(ret_info->port, rigctld_port, MAX_NUM_CHARS);
 
-	//get list of VFO names supported by backend
-	ret_err = rigctld_get_vfo_names(ret_info, &(ret_info->vfo_names));
-	if (ret_err != RIGCTLD_NO_ERR) {
-		return ret_err;
-	}
-
-	//get currently set VFO name from rigctld
-	ret_err = rigctld_get_current_vfo(ret_info, MAX_NUM_CHARS, ret_info->vfo_name);
-	if (ret_err != RIGCTLD_NO_ERR) {
-		return ret_err;
-	}
 	return RIGCTLD_NO_ERR;
 }
 
@@ -358,10 +347,6 @@ rigctld_error rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_na
 
 rigctld_error rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name)
 {
-	if (string_array_find(&(ret_info->vfo_names), vfo_name) == -1) {
-		return RIGCTLD_VFO_NAME_NOT_SUPPORTED;
-	}
-
 	strncpy(ret_info->vfo_name, vfo_name, MAX_NUM_CHARS);
 	return RIGCTLD_NO_ERR;
 }
