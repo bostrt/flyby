@@ -262,8 +262,6 @@ const char *rigctld_error_message(rigctld_error errorcode)
 			return "Unable to connect to rigctld.";
 		case RIGCTLD_SEND_FAILED:
 			return "Unable to send to rigctld.";
-		case RIGCTLD_VFO_NAME_NOT_SUPPORTED:
-			return "Specified VFO name not supported by backend.";
 	}
 	return "Unsupported error code.";
 }
@@ -273,26 +271,19 @@ double rigctld_read_frequency(const rigctld_info_t *info)
 	char message[256];
 	double freq;
 
-	/* Read pending return message */
+	//read pending return message
 	sock_readline(info->socket, message, sizeof(message));
 
-	rigctld_error ret_err = rigctld_send_vfo_command(info->socket, info->vfo_name);
-	if (ret_err != RIGCTLD_NO_ERR) {
-//		return ret_err;
-	}
+	rigctld_send_vfo_command(info->socket, info->vfo_name);
 
 	sprintf(message, "f\n");
-	ret_err = rigctld_send_message(info->socket, message);
-	if (ret_err != RIGCTLD_NO_ERR) {
-//		return ret_err;
-	}
+	rigctld_send_message(info->socket, message);
 
 	sock_readline(info->socket, message, sizeof(message));
 	freq=atof(message)/1.0e6;
 
 	//prepare new pending reply
 	rigctld_bootstrap_response(info->socket);
-//FIXME: fix return messages in this function.
 
 	return freq;
 }

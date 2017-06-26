@@ -47,8 +47,6 @@ typedef struct {
 	char port[MAX_NUM_CHARS];
 	///VFO name
 	char vfo_name[MAX_NUM_CHARS];
-	///Possible VFO names obtained from backend
-	string_array_t vfo_names;
 } rigctld_info_t;
 
 /**
@@ -90,19 +88,26 @@ void rotctld_set_tracking_horizon(rotctld_info_t *info, double horizon);
  **/
 void rotctld_set_update_interval(rotctld_info_t *info, int time_interval);
 
-
+/**
+ * Rigctld-related errors.
+ **/
 enum rigctld_error_e {
 	RIGCTLD_NO_ERR = 0,
 	RIGCTLD_GETADDRINFO_ERR = -1,
 	RIGCTLD_CONNECTION_FAILED = -2,
 	RIGCTLD_SEND_FAILED = -3,
-	RIGCTLD_VFO_NAME_NOT_SUPPORTED = -5
 };
 
 typedef enum rigctld_error_e rigctld_error;
 
+/**
+ * Make flyby fail and shut down ncurses on rigctld errors.
+ **/
 void rigctld_fail_on_errors(rigctld_error errorcode);
 
+/**
+ * Get error message related to input errorcode.
+ **/
 const char *rigctld_error_message(rigctld_error errorcode);
 
 /**
