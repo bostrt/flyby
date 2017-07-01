@@ -29,8 +29,8 @@ int main(int argc, char **argv)
 {
 	//rotctl options
 	bool use_rotctl = false;
-	char rotctld_host[MAX_NUM_CHARS] = ROTCTLD_DEFAULT_HOST;
-	char rotctld_port[MAX_NUM_CHARS] = ROTCTLD_DEFAULT_PORT;
+	char rotctld_host[MAX_NUM_CHARS] = {0};
+	char rotctld_port[MAX_NUM_CHARS] = {0};
 	int rotctld_update_interval = 0;
 	double tracking_horizon = 0;
 
@@ -116,10 +116,18 @@ int main(int argc, char **argv)
 				break;
 			case 'A': //rotctl
 				use_rotctl = true;
-				strncpy(rotctld_host, optarg, MAX_NUM_CHARS);
+				if (optarg) {
+					strncpy(rotctld_host, optarg, MAX_NUM_CHARS);
+				} else {
+					strncpy(rotctld_host, ROTCTLD_DEFAULT_HOST, MAX_NUM_CHARS);
+				}
 				break;
 			case FLYBY_OPT_ROTCTLD_PORT: //rotctl port
-				strncpy(rotctld_port, optarg, MAX_NUM_CHARS);
+				if (optarg) {
+					strncpy(rotctld_port, optarg, MAX_NUM_CHARS);
+				} else {
+					strncpy(rotctld_port, ROTCTLD_DEFAULT_PORT, MAX_NUM_CHARS);
+				}
 				break;
 			case 'H': //horizon
 				tracking_horizon = strtod(optarg, NULL);
