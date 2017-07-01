@@ -25,12 +25,37 @@
 #define FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL 206
 #define FLYBY_OPT_ADD_TLE 207
 
+/**
+ * Parse input argument on format host:port to each separate argument.
+ *
+ * \param argument Inpurt argument
+ * \param host Output host
+ * \param port Output port (left untouched if :port is missing from input argument
+ **/
+void parse_to_host_and_port(const char *argument, char *host, char *port)
+{
+	string_array_t arguments = {0};
+	stringsplit(argument, &arguments);
+	int num_arguments = string_array_size(&arguments);
+	if (num_arguments >= 1) {
+		strncpy(host, string_array_get(&arguments, 0), MAX_NUM_CHARS);
+	}
+	if (num_arguments == 2) {
+		strncpy(port, string_array_get(&arguments, 1), MAX_NUM_CHARS);
+	}
+	if ((num_arguments == 0) || (num_arguments > 2)) {
+		fprintf(stderr, "Error in format of argument: expected HOST or HOST:PORT, got %s.\n", argument);
+		exit(1);
+	}
+
+}
+
 int main(int argc, char **argv)
 {
 	//rotctl options
 	bool use_rotctl = false;
-	char rotctld_host[MAX_NUM_CHARS] = {0};
-	char rotctld_port[MAX_NUM_CHARS] = {0};
+	char rotctld_host[MAX_NUM_CHARS] = ROTCTLD_DEFAULT_HOST;
+	char rotctld_port[MAX_NUM_CHARS] = ROTCTLD_DEFAULT_PORT;
 	int rotctld_update_interval = 0;
 	double tracking_horizon = 0;
 
@@ -64,8 +89,8 @@ int main(int argc, char **argv)
 			"FILE", "Use FILE as TLE database file. Overrides user and system TLE database files. Multiple files can be specified using this option multiple times (e.g. -t file1 -t file2 ...)."},
 		{{"qth-file",			required_argument,	0,	'q'},
 			"FILE", "Use FILE as QTH config file. Overrides existing QTH config file."},
-		{{"rotctld-host",		required_argument,	0,	'A'},
-			"HOST", "Connect to a rotctld server with hostname HOST and enable antenna tracking."},
+		{{"rotctld-host",		optional_argument,	0,	'A'},
+			"HOST[:PORT]", "Connect to a rotctld server with hostname HOST and enable antenna tracking."},
 		{{"rotctld-port",		required_argument,	0,	FLYBY_OPT_ROTCTLD_PORT},
 			"PORT", "Specify rotctld server port."},
 		{{"rotctld-horizon",		required_argument,	0,	'H'},
@@ -117,17 +142,11 @@ int main(int argc, char **argv)
 			case 'A': //rotctl
 				use_rotctl = true;
 				if (optarg) {
-					strncpy(rotctld_host, optarg, MAX_NUM_CHARS);
-				} else {
-					strncpy(rotctld_host, ROTCTLD_DEFAULT_HOST, MAX_NUM_CHARS);
+					parse_to_host_and_port(optarg, rotctld_host, rotctld_port);
 				}
 				break;
 			case FLYBY_OPT_ROTCTLD_PORT: //rotctl port
-				if (optarg) {
-					strncpy(rotctld_port, optarg, MAX_NUM_CHARS);
-				} else {
-					strncpy(rotctld_port, ROTCTLD_DEFAULT_PORT, MAX_NUM_CHARS);
-				}
+				strncpy(rotctld_port, optarg, MAX_NUM_CHARS);
 				break;
 			case 'H': //horizon
 				tracking_horizon = strtod(optarg, NULL);
@@ -162,6 +181,15 @@ int main(int argc, char **argv)
 			default:
 				exit(1);
 		}
+	}
+
+	if (optind < argc) {
+		fprintf(stderr, "Unparsed arguments:");
+		for (int i=optind; i < argc; i++) {
+			fprintf(stderr, " %s", argv[i]);
+		}
+		fprintf(stderr, "\nMissing '=' between flag and optional argument?\n");
+		exit(1);
 	}
 
 	//add TLE files to XDG data home and exit

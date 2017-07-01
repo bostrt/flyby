@@ -92,7 +92,7 @@ void getopt_long_show_help(const char *usage_instructions, struct option_extende
 			break;
 
 			case optional_argument:
-				option_print += snprintf(option_print, MAX_NUM_CHARS, "=%s (optional)", long_options[index].argument);
+				option_print += snprintf(option_print, MAX_NUM_CHARS, "[=%s] ", long_options[index].argument);
 			break;
 		}
 		*option_print = ' ';
