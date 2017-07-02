@@ -17,7 +17,6 @@
 #include <libgen.h>
 
 //longopt value identificators for command line options without shorthand
-#define FLYBY_OPT_ROTCTLD_PORT 201
 #define FLYBY_OPT_UPLINK_PORT 202
 #define FLYBY_OPT_UPLINK_VFO 203
 #define FLYBY_OPT_DOWNLINK_PORT 204
@@ -28,14 +27,23 @@
 /**
  * Parse input argument on format host:port to each separate argument.
  *
- * \param argument Inpurt argument
+ * \param argument Input argument
  * \param host Output host
  * \param port Output port (left untouched if :port is missing from input argument
  **/
 void parse_to_host_and_port(const char *argument, char *host, char *port)
 {
+	char *trimmed_argument = strdup(argument);
+
+	//remove preceding '=', in case argument was input using a short options flag (e.g. -A=localhost, in which case
+	//'=' would be kept since getopt assumes -Aoptional_argument, not -A=optional_argument).
+	if (argument[0] == '=') {
+		strncpy(trimmed_argument, trimmed_argument+1, strlen(trimmed_argument)-1);
+	}
+
+	//split input argument localhost:port into localhost and port
 	string_array_t arguments = {0};
-	stringsplit(argument, &arguments);
+	stringsplit(trimmed_argument, &arguments);
 	int num_arguments = string_array_size(&arguments);
 	if (num_arguments >= 1) {
 		strncpy(host, string_array_get(&arguments, 0), MAX_NUM_CHARS);
@@ -48,6 +56,7 @@ void parse_to_host_and_port(const char *argument, char *host, char *port)
 		exit(1);
 	}
 
+	free(trimmed_argument);
 }
 
 int main(int argc, char **argv)
@@ -90,9 +99,7 @@ int main(int argc, char **argv)
 		{{"qth-file",			required_argument,	0,	'q'},
 			"FILE", "Use FILE as QTH config file. Overrides existing QTH config file."},
 		{{"rotctld-host",		optional_argument,	0,	'A'},
-			"HOST[:PORT]", "Connect to a rotctld server with hostname HOST and enable antenna tracking."},
-		{{"rotctld-port",		required_argument,	0,	FLYBY_OPT_ROTCTLD_PORT},
-			"PORT", "Specify rotctld server port."},
+			"HOST[:PORT]", "Connect to a rotctld server and enable antenna tracking. Optionally specify host and port, otherwise use " ROTCTLD_DEFAULT_HOST ":" ROTCTLD_DEFAULT_PORT "."},
 		{{"rotctld-horizon",		required_argument,	0,	'H'},
 			"HORIZON", "Specify elevation threshold for when flyby will start tracking an orbit."},
 		{{"rotctld-update-interval",	required_argument,	0,	FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL},
@@ -117,7 +124,7 @@ int main(int argc, char **argv)
 	snprintf(usage_instructions, MAX_NUM_CHARS, "Flyby satellite tracking program\nUsage:\n%s [options]", argv[0]);
 
 	struct option *long_options = extended_to_longopts(options);
-	char short_options[] = "u:t:q:A:H:U:D:h";
+	char short_options[] = "u:t:q:A::H:U:D:h";
 	while (1) {
 		int option_index = 0;
 		int c = getopt_long(argc, argv, short_options, long_options, &option_index);
@@ -144,9 +151,6 @@ int main(int argc, char **argv)
 				if (optarg) {
 					parse_to_host_and_port(optarg, rotctld_host, rotctld_port);
 				}
-				break;
-			case FLYBY_OPT_ROTCTLD_PORT: //rotctl port
-				strncpy(rotctld_port, optarg, MAX_NUM_CHARS);
 				break;
 			case 'H': //horizon
 				tracking_horizon = strtod(optarg, NULL);
