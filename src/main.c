@@ -277,7 +277,7 @@ int main(int argc, char **argv)
 	//connect to rotctld
 	rotctld_info_t rotctld = {0};
 	if (use_rotctl) {
-		rotctld_connect(rotctld_host, rotctld_port, &rotctld);
+		rotctld_fail_on_errors(rotctld_connect(rotctld_host, rotctld_port, &rotctld));
 		rotctld_set_update_interval(&rotctld, rotctld_update_interval);
 		rotctld_set_tracking_horizon(&rotctld, tracking_horizon);
 	}

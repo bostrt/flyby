@@ -49,6 +49,18 @@ typedef struct {
 	char vfo_name[MAX_NUM_CHARS];
 } rigctld_info_t;
 
+enum rotctld_error_e {
+	ROTCTLD_NO_ERR = 0,
+	ROTCTLD_GETADDRINFO_ERR = -1,
+	ROTCTLD_CONNECTION_FAILED = -2,
+	ROTCTLD_SEND_FAILED = -3,
+};
+
+typedef enum rotctld_error_e rotctld_error;
+
+void rotctld_fail_on_errors(rotctld_error errorcode);
+
+
 /**
  * Connect to rotctld. 
  *
@@ -56,7 +68,7 @@ typedef struct {
  * \param port Port
  * \param ret_info Returned rotctld connection instance
  **/
-void rotctld_connect(const char *hostname, const char *port, rotctld_info_t *ret_info);
+rotctld_error rotctld_connect(const char *hostname, const char *port, rotctld_info_t *ret_info);
 
 /**
  * Disconnect from rotctld.
@@ -76,7 +88,7 @@ void rotctld_disconnect(rotctld_info_t *info);
  * \param azimuth Azimuth in degrees
  * \param elevation Elevation in degrees
  **/
-void rotctld_track(rotctld_info_t *info, double azimuth, double elevation);
+rotctld_error rotctld_track(rotctld_info_t *info, double azimuth, double elevation);
 
 /**
  * Set current tracking horizon.

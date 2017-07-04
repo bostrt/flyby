@@ -35,7 +35,7 @@ int sock_readline(int sockd, char *message, size_t bufsize)
 	return pos;
 }
 
-void rotctld_connect(const char *rotctld_host, const char *rotctld_port, rotctld_info_t *ret_info)
+rotctld_error rotctld_connect(const char *rotctld_host, const char *rotctld_port, rotctld_info_t *ret_info)
 {
 	struct addrinfo hints, *servinfo, *servinfop;
 	memset(&hints, 0, sizeof(hints));
@@ -45,8 +45,7 @@ void rotctld_connect(const char *rotctld_host, const char *rotctld_port, rotctld
 	int rotctld_socket = 0;
 	int retval = getaddrinfo(rotctld_host, rotctld_port, &hints, &servinfo);
 	if (retval != 0) {
-		bailout("getaddrinfo error");
-		exit(-1);
+		return ROTCTLD_GETADDRINFO_ERR;
 	}
 
 	for(servinfop = servinfo; servinfop != NULL; servinfop = servinfop->ai_next) {
@@ -62,10 +61,7 @@ void rotctld_connect(const char *rotctld_host, const char *rotctld_port, rotctld
 		break;
 	}
 	if (servinfop == NULL) {
-		char error_message[MAX_NUM_CHARS];
-		snprintf(error_message, MAX_NUM_CHARS, "Unable to connect to rotctld on %s:%s", rotctld_host, rotctld_port);
-		bailout(error_message);
-		exit(-1);
+		return ROTCTLD_CONNECTION_FAILED;
 	}
 	freeaddrinfo(servinfo);
 	/* TrackDataNet() will wait for confirmation of a command before sending
@@ -84,6 +80,31 @@ void rotctld_connect(const char *rotctld_host, const char *rotctld_port, rotctld
 	ret_info->prev_cmd_azimuth = 0;
 	ret_info->prev_cmd_elevation = 0;
 	ret_info->first_cmd_sent = false;
+
+	return ROTCTLD_NO_ERR;
+}
+
+const char *rotctld_error_message(rotctld_error errorcode)
+{
+	switch (errorcode) {
+		case ROTCTLD_NO_ERR:
+			return "No error.";
+		case ROTCTLD_GETADDRINFO_ERR:
+			return "getaddrinfo error.";
+		case ROTCTLD_CONNECTION_FAILED:
+			return "Unable to connect to rotctld.";
+		case ROTCTLD_SEND_FAILED:
+			return "Unable to send to rotctld.";
+	}
+	return "Unsupported error code.";
+}
+
+void rotctld_fail_on_errors(rotctld_error errorcode)
+{
+	if (errorcode != ROTCTLD_NO_ERR) {
+		bailout(rotctld_error_message(errorcode));
+		exit(-1);
+	}
 }
 
 void rotctld_set_tracking_horizon(rotctld_info_t *info, double horizon)
@@ -110,7 +131,7 @@ bool rotctld_directions_differ(rotctld_info_t *info, double azimuth, double elev
 	return azimuth_differs || elevation_differs;
 }
 
-void rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
+rotctld_error rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
 {
 	time_t curr_time = time(NULL);
 	bool use_update_interval = (info->update_time_interval > 0);
@@ -138,10 +159,11 @@ void rotctld_track(rotctld_info_t *info, double azimuth, double elevation)
 		sprintf(message, "P %.2f %.2f\n", azimuth, elevation);
 		int len = strlen(message);
 		if (send(info->socket, message, len, 0) != len) {
-			bailout("Failed to send to rotctld");
-			exit(-1);
+			return ROTCTLD_SEND_FAILED;
 		}
 	}
+
+	return ROTCTLD_NO_ERR;
 }
 
 rigctld_error rigctld_send_message(int socket, char *message)
