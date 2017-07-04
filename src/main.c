@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 		},
 		{{"rigctld-uplink-host",	optional_argument,	0,	'U'},
 			"HOST[:PORT]",
-			"Connect to rigctld  and enable uplink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_UPLINK_DEFAULT_HOST ":" RIGCTLD_UPLINK_DEFAULT_PORT "."
+			"Connect to rigctld and enable uplink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_UPLINK_DEFAULT_HOST ":" RIGCTLD_UPLINK_DEFAULT_PORT "."
 		},
 		{{"rigctld-uplink-vfo",		required_argument,	0,	FLYBY_OPT_UPLINK_VFO},
 			"VFO_NAME",
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 		},
 		{{"rigctld-downlink-host",	optional_argument,	0,	'D'},
 			"HOST[:PORT]",
-			"Connect to rigctld  and enable downlink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DOWNLINK_DEFAULT_HOST ":" RIGCTLD_DOWNLINK_DEFAULT_PORT "."
+			"Connect to rigctld and enable downlink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DOWNLINK_DEFAULT_HOST ":" RIGCTLD_DOWNLINK_DEFAULT_PORT "."
 		},
 		{{"rigctld-downlink-vfo",	required_argument,	0,	FLYBY_OPT_DOWNLINK_VFO},
 			"VFO_NAME",
