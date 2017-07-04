@@ -106,11 +106,11 @@ int main(int argc, char **argv)
 			"FILE",
 			"Use FILE as QTH config file. Overrides existing QTH config file."
 		},
-		{{"rotctld-host",		optional_argument,	0,	'A'},
+		{{"rotctld",			optional_argument,	0,	'A'},
 			"HOST[:PORT]",
 			"Connect to a rotctld server and enable antenna tracking. Optionally specify host and port, otherwise use " ROTCTLD_DEFAULT_HOST ":" ROTCTLD_DEFAULT_PORT "."
 		},
-		{{"rotctld-horizon",		required_argument,	0,	'H'},
+		{{"tracking-horizon",		required_argument,	0,	'H'},
 			"HORIZON",
 			"Specify elevation threshold for when flyby will start tracking an orbit."
 		},
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 			"SECS",
 			"Send updates to rotctld other SECS seconds instead of when (azimuth,elevation) changes."
 		},
-		{{"rigctld-uplink-host",	optional_argument,	0,	'U'},
+		{{"rigctld-uplink",		optional_argument,	0,	'U'},
 			"HOST[:PORT]",
 			"Connect to rigctld and enable uplink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_UPLINK_DEFAULT_HOST ":" RIGCTLD_UPLINK_DEFAULT_PORT "."
 		},
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 			"VFO_NAME",
 			"Specify rigctld uplink VFO."
 		},
-		{{"rigctld-downlink-host",	optional_argument,	0,	'D'},
+		{{"rigctld-downlink",		optional_argument,	0,	'D'},
 			"HOST[:PORT]",
 			"Connect to rigctld and enable downlink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DOWNLINK_DEFAULT_HOST ":" RIGCTLD_DOWNLINK_DEFAULT_PORT "."
 		},
