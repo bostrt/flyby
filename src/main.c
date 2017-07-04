@@ -91,29 +91,53 @@ int main(int argc, char **argv)
 	//command line options
 	struct option_extended options[] = {
 		{{"add-tle-file",		required_argument,	0,	FLYBY_OPT_ADD_TLE},
-			"FILE", "Add TLE file to flyby's TLE database. The base filename of the input file will be used for the internal file, so any existing file with this filename will be overwritten."},
+			"FILE",
+			"Add TLE file to flyby's TLE database. The base filename of the input file will be used for the internal file, so any existing file with this filename will be overwritten."
+		},
 		{{"update-tle-db",		required_argument,	0,	'u'},
-			"FILE", "Update TLE database with TLE file FILE. Multiple files can be specified using the same option multiple times (e.g. -u file1 -u file2 ...). Flyby will exit afterwards. Any new TLEs in the file will be ignored."},
+			"FILE",
+			"Update TLE database with TLE file FILE. Multiple files can be specified using the same option multiple times (e.g. -u file1 -u file2 ...). Flyby will exit afterwards. Any new TLEs in the file will be ignored."
+		},
 		{{"tle-file",			required_argument,	0,	't'},
-			"FILE", "Use FILE as TLE database file. Overrides user and system TLE database files. Multiple files can be specified using this option multiple times (e.g. -t file1 -t file2 ...)."},
+			"FILE",
+			"Use FILE as TLE database file. Overrides user and system TLE database files. Multiple files can be specified using this option multiple times (e.g. -t file1 -t file2 ...)."
+		},
 		{{"qth-file",			required_argument,	0,	'q'},
-			"FILE", "Use FILE as QTH config file. Overrides existing QTH config file."},
+			"FILE",
+			"Use FILE as QTH config file. Overrides existing QTH config file."
+		},
 		{{"rotctld-host",		optional_argument,	0,	'A'},
-			"HOST[:PORT]", "Connect to a rotctld server and enable antenna tracking. Optionally specify host and port, otherwise use " ROTCTLD_DEFAULT_HOST ":" ROTCTLD_DEFAULT_PORT "."},
+			"HOST[:PORT]",
+			"Connect to a rotctld server and enable antenna tracking. Optionally specify host and port, otherwise use " ROTCTLD_DEFAULT_HOST ":" ROTCTLD_DEFAULT_PORT "."
+		},
 		{{"rotctld-horizon",		required_argument,	0,	'H'},
-			"HORIZON", "Specify elevation threshold for when flyby will start tracking an orbit."},
+			"HORIZON",
+			"Specify elevation threshold for when flyby will start tracking an orbit."
+		},
 		{{"rotctld-update-interval",	required_argument,	0,	FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL},
-			"SECS", "Send updates to rotctld other SECS seconds instead of when (azimuth,elevation) changes."},
+			"SECS",
+			"Send updates to rotctld other SECS seconds instead of when (azimuth,elevation) changes."
+		},
 		{{"rigctld-uplink-host",	optional_argument,	0,	'U'},
-			"HOST[:PORT]", "Connect to rigctld  and enable uplink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_UPLINK_DEFAULT_HOST ":" RIGCTLD_UPLINK_DEFAULT_PORT "."},
+			"HOST[:PORT]",
+			"Connect to rigctld  and enable uplink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_UPLINK_DEFAULT_HOST ":" RIGCTLD_UPLINK_DEFAULT_PORT "."
+		},
 		{{"rigctld-uplink-vfo",		required_argument,	0,	FLYBY_OPT_UPLINK_VFO},
-			"VFO_NAME", "Specify rigctld uplink VFO."},
+			"VFO_NAME",
+			"Specify rigctld uplink VFO."
+		},
 		{{"rigctld-downlink-host",	optional_argument,	0,	'D'},
-			"HOST[:PORT]", "Connect to rigctld  and enable downlink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DOWNLINK_DEFAULT_HOST ":" RIGCTLD_DOWNLINK_DEFAULT_PORT "."},
+			"HOST[:PORT]",
+			"Connect to rigctld  and enable downlink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DOWNLINK_DEFAULT_HOST ":" RIGCTLD_DOWNLINK_DEFAULT_PORT "."
+		},
 		{{"rigctld-downlink-vfo",	required_argument,	0,	FLYBY_OPT_DOWNLINK_VFO},
-			"VFO_NAME", "Specify rigctld downlink VFO."},
+			"VFO_NAME",
+			"Specify rigctld downlink VFO."
+		},
 		{{"help",			no_argument,		0,	'h'},
-			NULL, "Show help."},
+			NULL,
+			"Show help."
+		},
 		{{0, 0, 0, 0}, NULL, NULL}
 	};
 	char usage_instructions[MAX_NUM_CHARS];
