@@ -33,12 +33,12 @@
  **/
 void parse_to_host_and_port(const char *argument, char *host, char *port)
 {
-	char *trimmed_argument = strdup(argument);
+	char *trimmed_argument = calloc(strlen(argument), sizeof(char));
 
 	//remove preceding '=', in case argument was input using a short options flag (e.g. -A=localhost, in which case
 	//'=' would be kept since getopt assumes -Aoptional_argument, not -A=optional_argument).
 	if (argument[0] == '=') {
-		strncpy(trimmed_argument, trimmed_argument+1, strlen(trimmed_argument)-1);
+		strncpy(trimmed_argument, argument+1, strlen(argument)-1);
 	}
 
 	//split input argument localhost:port into localhost and port
@@ -104,16 +104,12 @@ int main(int argc, char **argv)
 			"HORIZON", "Specify elevation threshold for when flyby will start tracking an orbit."},
 		{{"rotctld-update-interval",	required_argument,	0,	FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL},
 			"SECS", "Send updates to rotctld other SECS seconds instead of when (azimuth,elevation) changes."},
-		{{"rigctld-uplink-host",		required_argument,	0,	'U'},
-			"HOST", "Connect to specified rigctld server for uplink frequency steering."},
-		{{"rigctld-uplink-port",		required_argument,	0,	FLYBY_OPT_UPLINK_PORT},
-			"PORT", "Specify rigctld uplink port."},
+		{{"rigctld-uplink-host",	optional_argument,	0,	'U'},
+			"HOST[:PORT]", "Connect to rigctld  and enable uplink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_UPLINK_DEFAULT_HOST ":" RIGCTLD_UPLINK_DEFAULT_PORT "."},
 		{{"rigctld-uplink-vfo",		required_argument,	0,	FLYBY_OPT_UPLINK_VFO},
 			"VFO_NAME", "Specify rigctld uplink VFO."},
-		{{"rigctld-downlink-host",	required_argument,	0,	'D'},
-			"HOST", "Connect to specified rigctld server for downlink frequency steering."},
-		{{"rigctld-downlink-port",	required_argument,	0,	FLYBY_OPT_DOWNLINK_PORT},
-			"PORT", "Specify rigctld downlink port."},
+		{{"rigctld-downlink-host",	optional_argument,	0,	'D'},
+			"HOST[:PORT]", "Connect to rigctld  and enable downlink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DOWNLINK_DEFAULT_HOST ":" RIGCTLD_DOWNLINK_DEFAULT_PORT "."},
 		{{"rigctld-downlink-vfo",	required_argument,	0,	FLYBY_OPT_DOWNLINK_VFO},
 			"VFO_NAME", "Specify rigctld downlink VFO."},
 		{{"help",			no_argument,		0,	'h'},
@@ -124,7 +120,7 @@ int main(int argc, char **argv)
 	snprintf(usage_instructions, MAX_NUM_CHARS, "Flyby satellite tracking program\nUsage:\n%s [options]", argv[0]);
 
 	struct option *long_options = extended_to_longopts(options);
-	char short_options[] = "u:t:q:A::H:U:D:h";
+	char short_options[] = "u:t:q:A::H:U::D::h";
 	while (1) {
 		int option_index = 0;
 		int c = getopt_long(argc, argv, short_options, long_options, &option_index);
@@ -160,20 +156,18 @@ int main(int argc, char **argv)
 				break;
 			case 'U': //uplink
 				use_rigctld_uplink = true;
-				strncpy(rigctld_uplink_host, optarg, MAX_NUM_CHARS);
-				break;
-			case FLYBY_OPT_UPLINK_PORT: //uplink port
-				strncpy(rigctld_uplink_port, optarg, MAX_NUM_CHARS);
+				if (optarg) {
+					parse_to_host_and_port(optarg, rigctld_uplink_host, rigctld_uplink_port);
+				}
 				break;
 			case FLYBY_OPT_UPLINK_VFO: //uplink vfo
 				strncpy(rigctld_uplink_vfo, optarg, MAX_NUM_CHARS);
 				break;
 			case 'D': //downlink
 				use_rigctld_downlink = true;
-				strncpy(rigctld_downlink_host, optarg, MAX_NUM_CHARS);
-				break;
-			case FLYBY_OPT_DOWNLINK_PORT: //downlink port
-				strncpy(rigctld_downlink_port, optarg, MAX_NUM_CHARS);
+				if (optarg) {
+					parse_to_host_and_port(optarg, rigctld_downlink_host, rigctld_downlink_port);
+				}
 				break;
 			case FLYBY_OPT_DOWNLINK_VFO: //downlink vfo
 				strncpy(rigctld_downlink_vfo, optarg, MAX_NUM_CHARS);

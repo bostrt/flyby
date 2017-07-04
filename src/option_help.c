@@ -53,15 +53,19 @@ void getopt_long_show_help(const char *usage_instructions, struct option_extende
 		if (name == 0) {
 			break;
 		}
-
 		int length = strlen(name);
+
+		const char *argument = long_options[index].argument;
+		if (argument != NULL) {
+			length += strlen(argument);
+		}
+
 		if (length > max_length) {
 			max_length = length;
 		}
 		index++;
 	}
-	max_length += 6; //extra signs that are displayed after the long option in --help
-	max_length += 8;
+	max_length += 8; //extra signs that are displayed after the long option in --help
 
 	//display initial description
 	index = 0;
