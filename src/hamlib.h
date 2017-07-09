@@ -90,6 +90,8 @@ void rotctld_disconnect(rotctld_info_t *info);
  **/
 rotctld_error rotctld_track(rotctld_info_t *info, double azimuth, double elevation);
 
+rotctld_error rotctld_read_position(rotctld_info_t *info, float *ret_azimuth, float *ret_elevation);
+
 /**
  * Set current tracking horizon.
  **/

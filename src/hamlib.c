@@ -35,6 +35,15 @@ int sock_readline(int sockd, char *message, size_t bufsize)
 	return pos;
 }
 
+void rotctld_bootstrap_response(int socket)
+{
+	//send request for position
+	send(socket, "p\n", 2, MSG_NOSIGNAL);
+
+	//will return azimuth\nelevation\n, so read back first part of this message
+	sock_readline(socket, NULL, 256);
+}
+
 rotctld_error rotctld_connect(const char *rotctld_host, const char *rotctld_port, rotctld_info_t *ret_info)
 {
 	struct addrinfo hints, *servinfo, *servinfop;
@@ -64,10 +73,10 @@ rotctld_error rotctld_connect(const char *rotctld_host, const char *rotctld_port
 		return ROTCTLD_CONNECTION_FAILED;
 	}
 	freeaddrinfo(servinfo);
+
 	/* TrackDataNet() will wait for confirmation of a command before sending
 	   the next so we bootstrap this by asking for the current position */
-	send(rotctld_socket, "p\n", 2, MSG_NOSIGNAL);
-	sock_readline(rotctld_socket, NULL, 256);
+	rotctld_bootstrap_response(rotctld_socket);
 
 	ret_info->socket = rotctld_socket;
 	ret_info->connected = true;
@@ -162,6 +171,43 @@ rotctld_error rotctld_track(rotctld_info_t *info, double azimuth, double elevati
 			return ROTCTLD_SEND_FAILED;
 		}
 	}
+
+	return ROTCTLD_NO_ERR;
+}
+
+rotctld_error rotctld_send_position_request(int socket)
+{
+	char message[256];
+	sprintf(message, "p\n");
+	int len = strlen(message);
+	if (send(socket, message, len, MSG_NOSIGNAL) != len) {
+		return ROTCTLD_SEND_FAILED;
+	}
+
+	return ROTCTLD_NO_ERR;
+}
+
+rotctld_error rotctld_read_position(rotctld_info_t *info, float *azimuth, float *elevation)
+{
+	char message[256];
+
+	//read pending return message
+	sock_readline(info->socket, message, sizeof(message));
+
+	//send position request
+	rotctld_error ret_err = rotctld_send_position_request(info->socket);
+	if (ret_err != ROTCTLD_NO_ERR) {
+		return ret_err;
+	}
+
+	//get response
+	sock_readline(info->socket, message, sizeof(message));
+	sscanf(message, "%f\n", azimuth);
+	sock_readline(info->socket, message, sizeof(message));
+	sscanf(message, "%f\n", elevation);
+
+	//prepare new pending reply
+	rotctld_bootstrap_response(info->socket);
 
 	return ROTCTLD_NO_ERR;
 }
