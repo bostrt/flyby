@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 			"HORIZON",
 			"Specify elevation threshold for when flyby will start tracking an orbit."
 		},
-		{{"rotctld-update-interval",	required_argument,	0,	FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL},
+		{{"tracking-update-interval",	required_argument,	0,	FLYBY_OPT_ROTCTLD_UPDATE_INTERVAL},
 			"SECS",
 			"Send updates to rotctld other SECS seconds instead of when (azimuth,elevation) changes."
 		},
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 			"HOST[:PORT]",
 			"Connect to rigctld and enable uplink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_UPLINK_DEFAULT_HOST ":" RIGCTLD_UPLINK_DEFAULT_PORT "."
 		},
-		{{"rigctld-uplink-vfo",		required_argument,	0,	FLYBY_OPT_UPLINK_VFO},
+		{{"uplink-vfo",			required_argument,	0,	FLYBY_OPT_UPLINK_VFO},
 			"VFO_NAME",
 			"Specify rigctld uplink VFO."
 		},
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 			"HOST[:PORT]",
 			"Connect to rigctld and enable downlink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DOWNLINK_DEFAULT_HOST ":" RIGCTLD_DOWNLINK_DEFAULT_PORT "."
 		},
-		{{"rigctld-downlink-vfo",	required_argument,	0,	FLYBY_OPT_DOWNLINK_VFO},
+		{{"downlink-vfo",		required_argument,	0,	FLYBY_OPT_DOWNLINK_VFO},
 			"VFO_NAME",
 			"Specify rigctld downlink VFO."
 		},
