@@ -980,6 +980,10 @@ void run_flyby_curses_ui(bool new_user, const char *qthfile, predict_observer_t 
 
 						case 'H':
 						case 'h':
+							hamlib_settings(rotctld, downlink, uplink);
+							break;
+
+						case KEY_F(1):
 							multitrack_show_help();
 							break;
 
