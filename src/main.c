@@ -70,14 +70,14 @@ int main(int argc, char **argv)
 
 	//rigctl uplink options
 	bool use_rigctld_uplink = false;
-	char rigctld_uplink_host[MAX_NUM_CHARS] = RIGCTLD_UPLINK_DEFAULT_HOST;
-	char rigctld_uplink_port[MAX_NUM_CHARS] = RIGCTLD_UPLINK_DEFAULT_PORT;
+	char rigctld_uplink_host[MAX_NUM_CHARS] = RIGCTLD_DEFAULT_HOST;
+	char rigctld_uplink_port[MAX_NUM_CHARS] = RIGCTLD_DEFAULT_PORT;
 	char rigctld_uplink_vfo[MAX_NUM_CHARS] = {0};
 
 	//rigctl downlink options
 	bool use_rigctld_downlink = false;
-	char rigctld_downlink_host[MAX_NUM_CHARS] = RIGCTLD_DOWNLINK_DEFAULT_HOST;
-	char rigctld_downlink_port[MAX_NUM_CHARS] = RIGCTLD_DOWNLINK_DEFAULT_PORT;
+	char rigctld_downlink_host[MAX_NUM_CHARS] = RIGCTLD_DEFAULT_HOST;
+	char rigctld_downlink_port[MAX_NUM_CHARS] = RIGCTLD_DEFAULT_PORT;
 	char rigctld_downlink_vfo[MAX_NUM_CHARS] = {0};
 
 	//config files
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 		},
 		{{"rigctld-uplink",		optional_argument,	0,	'U'},
 			"HOST[:PORT]",
-			"Connect to rigctld and enable uplink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_UPLINK_DEFAULT_HOST ":" RIGCTLD_UPLINK_DEFAULT_PORT "."
+			"Connect to rigctld and enable uplink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DEFAULT_HOST ":" RIGCTLD_DEFAULT_PORT "."
 		},
 		{{"uplink-vfo",			required_argument,	0,	FLYBY_OPT_UPLINK_VFO},
 			"VFO_NAME",
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 		},
 		{{"rigctld-downlink",		optional_argument,	0,	'D'},
 			"HOST[:PORT]",
-			"Connect to rigctld and enable downlink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DOWNLINK_DEFAULT_HOST ":" RIGCTLD_DOWNLINK_DEFAULT_PORT "."
+			"Connect to rigctld and enable downlink frequency control. Optionally specify host and port, otherwise use " RIGCTLD_DEFAULT_HOST ":" RIGCTLD_DEFAULT_PORT "."
 		},
 		{{"downlink-vfo",		required_argument,	0,	FLYBY_OPT_DOWNLINK_VFO},
 			"VFO_NAME",
@@ -275,7 +275,7 @@ int main(int argc, char **argv)
 	}
 
 	//connect to rotctld
-	rotctld_info_t rotctld = {0};
+	rotctld_info_t rotctld = {.host = ROTCTLD_DEFAULT_HOST, .port = ROTCTLD_DEFAULT_PORT};
 	if (use_rotctl) {
 		rotctld_fail_on_errors(rotctld_connect(rotctld_host, rotctld_port, &rotctld));
 		rotctld_set_update_interval(&rotctld, rotctld_update_interval);
@@ -296,7 +296,7 @@ int main(int argc, char **argv)
 	}
 
 	//connect to rigctld
-	rigctld_info_t uplink = {0};
+	rigctld_info_t uplink = {.host = RIGCTLD_DEFAULT_HOST, .port = RIGCTLD_DEFAULT_PORT};
 	if (use_rigctld_uplink) {
 		rigctld_fail_on_errors(rigctld_connect(rigctld_uplink_host, rigctld_uplink_port, &uplink));
 
@@ -309,7 +309,7 @@ int main(int argc, char **argv)
 			exit(-1);
 		}
 	}
-	rigctld_info_t downlink = {0};
+	rigctld_info_t downlink = {.host = RIGCTLD_DEFAULT_HOST, .port = RIGCTLD_DEFAULT_PORT};
 	if (use_rigctld_downlink) {
 		rigctld_fail_on_errors(rigctld_connect(rigctld_downlink_host, rigctld_downlink_port, &downlink));
 
