@@ -152,7 +152,7 @@ void rigctld_disconnect(rigctld_info_t *info);
  * \param info rigctld connection instance
  * \param frequency Frequency in MHz
  **/
-rigctld_error rigctld_set_frequency(const rigctld_info_t *info, double frequency);
+rigctld_error rigctld_set_frequency(rigctld_info_t *info, double frequency);
 
 /**
  * Read frequency from rigctld. 

@@ -54,6 +54,7 @@ rotctld_error rotctld_connect(const char *rotctld_host, const char *rotctld_port
 	int rotctld_socket = 0;
 	int retval = getaddrinfo(rotctld_host, rotctld_port, &hints, &servinfo);
 	if (retval != 0) {
+		ret_info->connected = false;
 		return ROTCTLD_GETADDRINFO_ERR;
 	}
 
@@ -168,6 +169,7 @@ rotctld_error rotctld_track(rotctld_info_t *info, double azimuth, double elevati
 		sprintf(message, "P %.2f %.2f\n", azimuth, elevation);
 		int len = strlen(message);
 		if (send(info->socket, message, len, MSG_NOSIGNAL) != len) {
+			info->connected = false;
 			return ROTCTLD_SEND_FAILED;
 		}
 	}
@@ -197,6 +199,7 @@ rotctld_error rotctld_read_position(rotctld_info_t *info, float *azimuth, float 
 	//send position request
 	rotctld_error ret_err = rotctld_send_position_request(info->socket);
 	if (ret_err != ROTCTLD_NO_ERR) {
+		info->connected = false;
 		return ret_err;
 	}
 
@@ -242,6 +245,7 @@ rigctld_error rigctld_connect(const char *rigctld_host, const char *rigctld_port
 	int rigctld_socket = 0;
 	int retval = getaddrinfo(rigctld_host, rigctld_port, &hints, &servinfo);
 	if (retval != 0) {
+		ret_info->connected = false;
 		return RIGCTLD_GETADDRINFO_ERR;
 	}
 
@@ -265,6 +269,7 @@ rigctld_error rigctld_connect(const char *rigctld_host, const char *rigctld_port
 	   the next so we bootstrap this by asking for the current frequency */
 	rigctld_error ret_err = rigctld_bootstrap_response(rigctld_socket);
 	if (ret_err != RIGCTLD_NO_ERR) {
+		ret_info->connected = false;
 		return ret_err;
 	}
 
@@ -292,7 +297,7 @@ rigctld_error rigctld_send_vfo_command(int socket, const char *vfo_name)
 	return RIGCTLD_NO_ERR;
 }
 
-rigctld_error rigctld_set_frequency(const rigctld_info_t *info, double frequency)
+rigctld_error rigctld_set_frequency(rigctld_info_t *info, double frequency)
 {
 	char message[256];
 
@@ -304,6 +309,7 @@ rigctld_error rigctld_set_frequency(const rigctld_info_t *info, double frequency
 
 	rigctld_error ret_err = rigctld_send_vfo_command(info->socket, info->vfo_name);
 	if (ret_err != RIGCTLD_NO_ERR) {
+		info->connected = false;
 		return ret_err;
 	}
 
@@ -366,6 +372,7 @@ rigctld_error rigctld_get_current_vfo(rigctld_info_t *info, int string_buffer_le
 	sprintf(message, "v\n");
 	rigctld_error ret_err = rigctld_send_message(info->socket, message);
 	if (ret_err != RIGCTLD_NO_ERR) {
+		info->connected = false;
 		return ret_err;
 	}
 
@@ -387,6 +394,7 @@ rigctld_error rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_na
 	sprintf(message, "V ?\n");
 	rigctld_error ret_err = rigctld_send_message(info->socket, message);
 	if (ret_err != RIGCTLD_NO_ERR) {
+		info->connected = false;
 		return ret_err;
 	}
 
