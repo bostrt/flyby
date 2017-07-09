@@ -35,7 +35,9 @@ struct rotctld_form {
 	FIELD *update_time_description;
 	FIELD *update_time;
 	FIELD *connection_status;
+	FIELD *azimuth_description;
 	FIELD *azimuth;
+	FIELD *elevation_description;
 	FIELD *elevation;
 	FIELD **field_array;
 };
@@ -66,13 +68,15 @@ struct rotctld_form * rotctld_form_prepare(rotctld_info_t *rotctld, WINDOW *wind
 	snprintf(update_time_str, MAX_NUM_CHARS, "%d", rotctld->update_time_interval);
 	form->update_time = field(row, col++, update_time_str);
 
+	form->azimuth_description = field(row, col++, "Azimuth");
+	form->elevation_description = field(row, col++, "Elevation");
 	form->azimuth = field(row, col++, NULL);
 	form->elevation = field(row, col++, NULL);
 
-	#define NUM_ROTCTLD_FIELDS 12
+	#define NUM_ROTCTLD_FIELDS 14
 	form->field_array = calloc(NUM_ROTCTLD_FIELDS+1, sizeof(FIELD*));
 	FIELD *fields[NUM_ROTCTLD_FIELDS+1] = {form->title, form->connection_status,
-		form->host, form->port, form->tracking_horizon_description, form->tracking_horizon, form->update_time_description, form->update_time, form->azimuth, form->elevation, 0};
+		form->host, form->port, form->tracking_horizon_description, form->tracking_horizon, form->update_time_description, form->update_time, form->azimuth_description, form->azimuth, form->elevation_description, form->elevation, 0};
 	memcpy(form->field_array, fields, sizeof(FIELD*)*NUM_ROTCTLD_FIELDS);
 
 
@@ -189,23 +193,6 @@ void hamlib_settings(rotctld_info_t *rotctld, rigctld_info_t *downlink, rigctld_
 		rigctld_form_update(downlink, downlink_form);
 		rigctld_form_update(uplink, uplink_form);
 		rotctld_form_update(rotctld, rotctld_form);
-		/*
-		mvwprintw(settings_window, row++, col, "Rotor controller");*/
-
-
-	/*
-		row++;
-		mvwprintw(settings_window, row++, col, "uplink:");
-		mvwprintw(settings_window, row++, col, "%d", uplink->connected);
-		mvwprintw(settings_window, row++, col, "%d", uplink->socket);
-		mvwprintw(settings_window, row++, col, "%s:%s", uplink->host, uplink->port);
-		mvwprintw(settings_window, row++, col, "%s", uplink->vfo_name);
-		float uplink_frequency = 0;
-		if (uplink->connected) {
-			uplink_frequency = rigctld_read_frequency(uplink);
-		}
-		mvwprintw(settings_window, row++, col, "%f", uplink_frequency);
-		*/
 
 		wrefresh(uplink_window);
 		wrefresh(downlink_window);
