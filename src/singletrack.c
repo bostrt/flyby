@@ -876,7 +876,7 @@ int singletrack_track_satellite(const char *satellite_name, predict_observer_t *
 
 		//send data to rotctld
 		if ((obs.elevation*180.0/M_PI >= rotctld->tracking_horizon) && rotctld->connected) {
-			rotctld_track(rotctld, obs.azimuth*180.0/M_PI, obs.elevation*180.0/M_PI);
+			rotctld_fail_on_errors(rotctld_track(rotctld, obs.azimuth*180.0/M_PI, obs.elevation*180.0/M_PI));
 		}
 
 		//handle keyboard input
@@ -884,7 +884,7 @@ int singletrack_track_satellite(const char *satellite_name, predict_observer_t *
 
 		//move antenna towards AOS position
 		if ((input_key == 'A') && (obs.elevation*180.0/M_PI < rotctld->tracking_horizon) && rotctld->connected) {
-			rotctld_track(rotctld, aos.azimuth*180.0/M_PI, 0);
+			rotctld_fail_on_errors(rotctld_track(rotctld, aos.azimuth*180.0/M_PI, 0));
 		}
 
 		if (comsat && (input_key != ERR)) {

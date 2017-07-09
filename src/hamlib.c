@@ -66,7 +66,7 @@ rotctld_error rotctld_connect(const char *rotctld_host, const char *rotctld_port
 	freeaddrinfo(servinfo);
 	/* TrackDataNet() will wait for confirmation of a command before sending
 	   the next so we bootstrap this by asking for the current position */
-	send(rotctld_socket, "p\n", 2, 0);
+	send(rotctld_socket, "p\n", 2, MSG_NOSIGNAL);
 	sock_readline(rotctld_socket, NULL, 256);
 
 	ret_info->socket = rotctld_socket;
@@ -158,7 +158,7 @@ rotctld_error rotctld_track(rotctld_info_t *info, double azimuth, double elevati
 
 		sprintf(message, "P %.2f %.2f\n", azimuth, elevation);
 		int len = strlen(message);
-		if (send(info->socket, message, len, 0) != len) {
+		if (send(info->socket, message, len, MSG_NOSIGNAL) != len) {
 			return ROTCTLD_SEND_FAILED;
 		}
 	}
@@ -170,7 +170,7 @@ rigctld_error rigctld_send_message(int socket, char *message)
 {
 	int len;
 	len = strlen(message);
-	if (send(socket, message, len, 0) != len) {
+	if (send(socket, message, len, MSG_NOSIGNAL) != len) {
 		return RIGCTLD_SEND_FAILED;
 	}
 	return RIGCTLD_NO_ERR;
@@ -367,7 +367,7 @@ rigctld_error rigctld_set_vfo(rigctld_info_t *ret_info, const char *vfo_name)
 void rigctld_disconnect(rigctld_info_t *info)
 {
 	if (info->connected) {
-		send(info->socket, "q\n", 2, 0);
+		send(info->socket, "q\n", 2, MSG_NOSIGNAL);
 		close(info->socket);
 		info->connected = false;
 	}
@@ -376,7 +376,7 @@ void rigctld_disconnect(rigctld_info_t *info)
 void rotctld_disconnect(rotctld_info_t *info)
 {
 	if (info->connected) {
-		send(info->socket, "q\n", 2, 0);
+		send(info->socket, "q\n", 2, MSG_NOSIGNAL);
 		close(info->socket);
 		info->connected = false;
 	}
