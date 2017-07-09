@@ -8,7 +8,7 @@
 #define HAMLIB_SETTINGS_WINDOW_ROW 0
 #define HAMLIB_SETTINGS_WINDOW_COL 0
 
-#define HAMLIB_SETTINGS_FIELD_WIDTH 10
+#define HAMLIB_SETTINGS_FIELD_WIDTH 12
 #define HAMLIB_SETTINGS_FIELD_HEIGHT 1
 
 #define SPACING 3
@@ -16,6 +16,7 @@
 FIELD *field(int row, int col, const char *content)
 {
 	FIELD *field = new_field(HAMLIB_SETTINGS_FIELD_HEIGHT, HAMLIB_SETTINGS_FIELD_WIDTH, row, col*(HAMLIB_SETTINGS_FIELD_WIDTH + SPACING), 0, 0);
+	set_field_back(field, COLOR_PAIR(5));
 
 	if (content != NULL) {
 		set_field_buffer(field, 0, content);
@@ -50,26 +51,30 @@ struct rotctld_form * rotctld_form_prepare(rotctld_info_t *rotctld, WINDOW *wind
 	int col = 0;
 
 	form->title = field(row, col++, "Rotor controller");
-	form->connection_status = field(row, col++, NULL);
-
 	row++;
 	col = 0;
+	form->connection_status = field(row, col++, NULL);
 	form->host = field(row, col++, rotctld->host);
 	form->port = field(row, col++, rotctld->port);
 
+	row += 2;
+	col = 0;
 	form->tracking_horizon_description = field(row, col++, "Tracking horizon");
+	form->update_time_description = field(row, col++, "Update time interval");
+	form->azimuth_description = field(row, col++, "Azimuth");
+	form->elevation_description = field(row, col++, "Elevation");
+	row++;
+	col = 0;
+
 
 	char tracking_horizon_str[MAX_NUM_CHARS];
 	snprintf(tracking_horizon_str, MAX_NUM_CHARS, "%f", rotctld->tracking_horizon);
 	form->tracking_horizon = field(row, col++, tracking_horizon_str);
 
-	form->update_time_description = field(row, col++, "Update time interval");
 	char update_time_str[MAX_NUM_CHARS];
 	snprintf(update_time_str, MAX_NUM_CHARS, "%d", rotctld->update_time_interval);
 	form->update_time = field(row, col++, update_time_str);
 
-	form->azimuth_description = field(row, col++, "Azimuth");
-	form->elevation_description = field(row, col++, "Elevation");
 	form->azimuth = field(row, col++, NULL);
 	form->elevation = field(row, col++, NULL);
 
@@ -134,15 +139,19 @@ struct rigctld_form * rigctld_form_prepare(const char *title, rigctld_info_t *ri
 	struct rigctld_form *form = (struct rigctld_form *) malloc(sizeof(struct rigctld_form));
 
 	form->title = field(row, col++, title);
-	form->connection_status = field(row, col++, "N/A");
-
 	row++;
 	col = 0;
+	form->connection_status = field(row, col++, "N/A");
+
 	form->host = field(row, col++, rigctld->host);
 	form->port = field(row, col++, rigctld->port);
+	row += 2;
+	col = 0;
 	form->vfo_description = field(row, col++, "VFO");
-	form->vfo = field(row, col++, rigctld->vfo_name);
 	form->frequency_description = field(row, col++, "Frequency (MHz)");
+	row++;
+	col = 0;
+	form->vfo = field(row, col++, strlen(rigctld->vfo_name) > 0 ? rigctld->vfo_name : "N/A");
 	form->frequency = field(row, col++, "N/A");
 
 
