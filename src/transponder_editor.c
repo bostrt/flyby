@@ -134,10 +134,10 @@ void transponder_database_entry_displayer(const char *name, struct sat_db_entry 
 
 
 //default style for field
-#define TRANSPONDER_ENTRY_DEFAULT_STYLE COLOR_PAIR(1)|A_UNDERLINE
+#define TRANSPONDER_ENTRY_DEFAULT_STYLE FIELDSTYLE_INACTIVE
 
 //style of field when the cursor marker is in it
-#define TRANSPONDER_ACTIVE_FIELDSTYLE COLOR_PAIR(5)
+#define TRANSPONDER_ACTIVE_FIELDSTYLE FIELDSTYLE_ACTIVE
 
 /**
  * Helper function for creating a FIELD in the transponder form with the correct default style.
