@@ -33,12 +33,13 @@
  **/
 void parse_to_host_and_port(const char *argument, char *host, char *port)
 {
-	char *trimmed_argument = calloc(strlen(argument), sizeof(char));
+	char *trimmed_argument = strdup(argument);
 
 	//remove preceding '=', in case argument was input using a short options flag (e.g. -A=localhost, in which case
 	//'=' would be kept since getopt assumes -Aoptional_argument, not -A=optional_argument).
 	if (argument[0] == '=') {
 		strncpy(trimmed_argument, argument+1, strlen(argument)-1);
+		trimmed_argument[strlen(argument)-1] = '\0';
 	}
 
 	//split input argument localhost:port into localhost and port
