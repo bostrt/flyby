@@ -239,6 +239,9 @@ rigctld_error rigctld_get_vfo_names(rigctld_info_t *info, string_array_t *vfo_na
 
 rigctld_error rigctld_connect(const char *rigctld_host, const char *rigctld_port, rigctld_info_t *ret_info)
 {
+	strncpy(ret_info->host, rigctld_host, MAX_NUM_CHARS);
+	strncpy(ret_info->port, rigctld_port, MAX_NUM_CHARS);
+
 	struct addrinfo hints, *servinfo, *servinfop;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -276,8 +279,6 @@ rigctld_error rigctld_connect(const char *rigctld_host, const char *rigctld_port
 
 	ret_info->socket = rigctld_socket;
 	ret_info->connected = true;
-	strncpy(ret_info->host, rigctld_host, MAX_NUM_CHARS);
-	strncpy(ret_info->port, rigctld_port, MAX_NUM_CHARS);
 
 	return RIGCTLD_NO_ERR;
 }
