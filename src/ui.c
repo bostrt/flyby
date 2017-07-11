@@ -865,6 +865,8 @@ void run_flyby_curses_ui(bool new_user, const char *qthfile, predict_observer_t 
 	init_pair(6,COLOR_RED,COLOR_WHITE);
 	init_pair(7,COLOR_CYAN,COLOR_RED);
 	init_pair(8,COLOR_RED,COLOR_YELLOW);
+	init_pair(9,COLOR_BLACK,COLOR_GREEN);
+	init_pair(10,COLOR_BLACK,COLOR_YELLOW);
 
 	if (new_user) {
 		qth_editor(qthfile, observer);
