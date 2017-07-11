@@ -166,6 +166,22 @@ void set_connection_attempt(FIELD *field)
 	set_field_back(field, CONNECTING_STYLE);
 }
 
+void rotctld_form_attempt_reconnection(struct rotctld_form *form, rotctld_info_t *rotctld)
+{
+	char *host_field = strdup(field_buffer(form->host, 0));
+	trim_whitespaces_from_end(host_field);
+	char *port_field = strdup(field_buffer(form->port, 0));
+	trim_whitespaces_from_end(port_field);
+	rotctld_disconnect(rotctld);
+	set_connection_attempt(form->connection_status);
+	form_driver(form->form, REQ_VALIDATION);
+	wrefresh(form->window);
+	rotctld_connect(host_field, port_field, rotctld);
+	set_connection_field(form->connection_status, rotctld->connected);
+	free(host_field);
+	free(port_field);
+}
+
 void rotctld_form_update(rotctld_info_t *rotctld, struct rotctld_form *form)
 {
 	//read current azimuth/elevation from rotctld
@@ -178,25 +194,6 @@ void rotctld_form_update(rotctld_info_t *rotctld, struct rotctld_form *form)
 		}
 	}
 	set_field_buffer(form->aziele, 0, aziele_string);
-
-	//attempt reconnection if host or port fields have changed
-	//må sjekke dette når current field ikke er host, current field ikke er port
-	//host eller port må være ulikt current host eller port
-	//case 1: klarer ikke å connecte. Var connected. Reverter felt til hva som er i rotctld
-	//case 2: klarer å connecte. Skru av den forrige, kopier over sockets.
-	char *host_field = strdup(field_buffer(form->host, 0));
-	trim_whitespaces_from_end(host_field);
-	char *port_field = strdup(field_buffer(form->port, 0));
-	trim_whitespaces_from_end(port_field);
-	if (((strcmp(host_field, rotctld->host) != 0) && (current_field(form->form) != form->host))
-			|| ((strcmp(port_field, rotctld->port) != 0) && (current_field(form->form) != form->port))) {
-		rotctld_disconnect(rotctld);
-		set_connection_attempt(form->connection_status);
-		form_driver(form->form, REQ_VALIDATION);
-		wrefresh(form->window);
-		rotctld_connect(host_field, port_field, rotctld);
-	}
-
 
 	set_connection_field(form->connection_status, rotctld->connected);
 }
@@ -216,9 +213,26 @@ struct rigctld_form {
 	FIELD *frequency;
 
 	FIELD **field_array;
+	WINDOW *window;
 
 	int last_row;
 };
+
+void rigctld_form_attempt_reconnection(struct rigctld_form *form, rigctld_info_t *rigctld)
+{
+	char *host_field = strdup(field_buffer(form->host, 0));
+	trim_whitespaces_from_end(host_field);
+	char *port_field = strdup(field_buffer(form->port, 0));
+	trim_whitespaces_from_end(port_field);
+	rigctld_disconnect(rigctld);
+	set_connection_attempt(form->connection_status);
+	form_driver(form->form, REQ_VALIDATION);
+	wrefresh(form->window);
+	rigctld_connect(host_field, port_field, rigctld);
+	set_connection_field(form->connection_status, rigctld->connected);
+	free(host_field);
+	free(port_field);
+}
 
 struct rigctld_form * rigctld_form_prepare(const char *title, rigctld_info_t *rigctld, WINDOW *window)
 {
@@ -226,6 +240,7 @@ struct rigctld_form * rigctld_form_prepare(const char *title, rigctld_info_t *ri
 	int col = 0;
 
 	struct rigctld_form *form = (struct rigctld_form *) malloc(sizeof(struct rigctld_form));
+	form->window = window;
 
 	form->title = field(TITLE_FIELD, row, col++, title);
 	col += 2;
@@ -367,7 +382,13 @@ void hamlib_settings(rotctld_info_t *rotctld, rigctld_info_t *downlink, rigctld_
 				form_driver(curr_form, REQ_RIGHT_FIELD);
 				break;
 			case 10:
-				form_driver(curr_form, REQ_NEXT_FIELD);
+				if (curr_form == rotctld_form->form) {
+					rotctld_form_attempt_reconnection(rotctld_form, rotctld);
+				} else if (curr_form == downlink_form->form) {
+					rigctld_form_attempt_reconnection(downlink_form, downlink);
+				} else if (curr_form == uplink_form->form) {
+					rigctld_form_attempt_reconnection(uplink_form, uplink);
+				}
 				break;
 			case KEY_BACKSPACE:
 				form_driver(curr_form, REQ_DEL_PREV);
