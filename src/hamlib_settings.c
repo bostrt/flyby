@@ -13,6 +13,18 @@
 
 #define SPACING 1
 
+
+//TODO:
+//* Remove static fields from structs.
+//* Free memory
+//* Doc
+//* Better code reuse across rigctl and rotctl forms
+//* Cleanup hamlib.c/.h: Common error codes? Position reading makes bootstrapping redundant, but still need it, rethink this.
+//* Handle hamlib errors in singletrack
+//* Smaller quickaccess windows elsewhere?
+//* Access to settings from singletrack
+//* Read/write convenient settings from/to files
+
 enum field_type {
 	TITLE_FIELD,
 	DESCRIPTION_FIELD,
@@ -76,6 +88,24 @@ struct rotctld_form {
 	int last_row;
 	WINDOW *window;
 };
+
+int rotctld_form_update_time(struct rotctld_form *form)
+{
+	char *update_time_string = strdup(field_buffer(form->update_time, 0));
+	trim_whitespaces_from_end(update_time_string);
+	int update_time = atoi(update_time_string);
+	free(update_time_string);
+	return update_time;
+}
+
+double rotctld_form_horizon(struct rotctld_form *form)
+{
+	char *horizon_string = strdup(field_buffer(form->tracking_horizon, 0));
+	trim_whitespaces_from_end(horizon_string);
+	double horizon = strtod(horizon_string, NULL);
+	free(horizon_string);
+	return horizon;
+}
 
 #define ROTOR_FORM_TITLE "Rotor"
 
@@ -196,6 +226,12 @@ void rotctld_form_update(rotctld_info_t *rotctld, struct rotctld_form *form)
 	set_field_buffer(form->aziele, 0, aziele_string);
 
 	set_connection_field(form->connection_status, rotctld->connected);
+
+	double horizon = rotctld_form_horizon(form);
+	rotctld_set_tracking_horizon(rotctld, horizon);
+
+	int update_time = rotctld_form_update_time(form);
+	rotctld_set_update_interval(rotctld, update_time);
 }
 
 struct rigctld_form {
@@ -217,6 +253,14 @@ struct rigctld_form {
 
 	int last_row;
 };
+
+char *rigctld_form_vfo(struct rigctld_form *form)
+{
+	char *vfo_field = strdup(field_buffer(form->vfo, 0));
+	trim_whitespaces_from_end(vfo_field);
+	return vfo_field;
+}
+
 
 void rigctld_form_attempt_reconnection(struct rigctld_form *form, rigctld_info_t *rigctld)
 {
@@ -256,7 +300,7 @@ struct rigctld_form * rigctld_form_prepare(const char *title, rigctld_info_t *ri
 	col = 0;
 	form->host = field(FREE_ENTRY_FIELD, row, col++, rigctld->host);
 	form->port = field(FREE_ENTRY_FIELD, row, col++, rigctld->port);
-	form->vfo = field(FREE_ENTRY_FIELD, row, col++, strlen(rigctld->vfo_name) > 0 ? rigctld->vfo_name : "N/A");
+	form->vfo = field(FREE_ENTRY_FIELD, row, col++, rigctld->vfo_name);
 	form->frequency = field(DEFAULT_FIELD, row, col++, "N/A");
 
 
@@ -287,13 +331,18 @@ void rigctld_form_update(rigctld_info_t *rigctld, struct rigctld_form *form)
 		double frequency;
 		rigctld_error ret_err = rigctld_read_frequency(rigctld, &frequency);
 		if (ret_err == RIGCTLD_NO_ERR) {
-			snprintf(frequency_string, MAX_NUM_CHARS, "%f MHz\n", frequency);
+			snprintf(frequency_string, MAX_NUM_CHARS, "%.3f MHz\n", frequency);
 		}
 	}
 	set_field_buffer(form->frequency, 0, frequency_string);
 
 	set_connection_field(form->connection_status, rigctld->connected);
+
+	char *vfo = rigctld_form_vfo(form);
+	rigctld_set_vfo(rigctld, vfo);
+	free(vfo);
 }
+
 
 #define RIGCTLD_SETTINGS_WINDOW_HEIGHT 6
 #define ROTCTLD_SETTINGS_WINDOW_HEIGHT 9
