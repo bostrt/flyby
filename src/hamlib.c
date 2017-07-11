@@ -46,6 +46,9 @@ void rotctld_bootstrap_response(int socket)
 
 rotctld_error rotctld_connect(const char *rotctld_host, const char *rotctld_port, rotctld_info_t *ret_info)
 {
+	strncpy(ret_info->host, rotctld_host, MAX_NUM_CHARS);
+	strncpy(ret_info->port, rotctld_port, MAX_NUM_CHARS);
+
 	struct addrinfo hints, *servinfo, *servinfop;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -81,8 +84,6 @@ rotctld_error rotctld_connect(const char *rotctld_host, const char *rotctld_port
 
 	ret_info->socket = rotctld_socket;
 	ret_info->connected = true;
-	strncpy(ret_info->host, rotctld_host, MAX_NUM_CHARS);
-	strncpy(ret_info->port, rotctld_port, MAX_NUM_CHARS);
 	ret_info->tracking_horizon = 0;
 
 	ret_info->update_time_interval = 0;
@@ -340,7 +341,7 @@ const char *rigctld_error_message(rigctld_error errorcode)
 	return "Unsupported error code.";
 }
 
-double rigctld_read_frequency(const rigctld_info_t *info)
+rigctld_error rigctld_read_frequency(rigctld_info_t *info, double *ret_frequency)
 {
 	char message[256];
 	double freq;
@@ -348,18 +349,30 @@ double rigctld_read_frequency(const rigctld_info_t *info)
 	//read pending return message
 	sock_readline(info->socket, message, sizeof(message));
 
-	rigctld_send_vfo_command(info->socket, info->vfo_name);
+	rigctld_error ret_err = rigctld_send_vfo_command(info->socket, info->vfo_name);
+	if (ret_err != RIGCTLD_NO_ERR) {
+		info->connected = false;
+		return ret_err;
+	}
 
 	sprintf(message, "f\n");
-	rigctld_send_message(info->socket, message);
+	ret_err = rigctld_send_message(info->socket, message);
+	if (ret_err != RIGCTLD_NO_ERR) {
+		info->connected = false;
+		return ret_err;
+	}
 
 	sock_readline(info->socket, message, sizeof(message));
-	freq=atof(message)/1.0e6;
+	*ret_frequency = atof(message)/1.0e6;
 
 	//prepare new pending reply
-	rigctld_bootstrap_response(info->socket);
+	ret_err = rigctld_bootstrap_response(info->socket);
+	if (ret_err != RIGCTLD_NO_ERR) {
+		info->connected = false;
+		return ret_err;
+	}
 
-	return freq;
+	return RIGCTLD_NO_ERR;
 }
 
 rigctld_error rigctld_get_current_vfo(rigctld_info_t *info, int string_buffer_length, char *current_vfo)

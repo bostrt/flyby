@@ -156,8 +156,9 @@ rigctld_error rigctld_set_frequency(rigctld_info_t *info, double frequency);
  * Read frequency from rigctld. 
  *
  * \param info rigctld connection instance
- * \return Current frequency in MHz
+ * \param frequency Returned frequency in MHz
+ * \return RIGCTLD_NO_ERR on success
  **/
-double rigctld_read_frequency(const rigctld_info_t *info);
+rigctld_error rigctld_read_frequency(rigctld_info_t *info, double *frequency);
 
 #endif
